@@ -80,7 +80,7 @@
             ".suv-app-promo-text strong{display:block;font-size:14px;font-weight:800}" +
             ".suv-app-promo-text span{display:block;font-size:12px;color:#aebbd3}" +
             ".suv-app-promo-text a.suv-app-promo-help{display:block;margin-top:2px;font-size:11.5px;color:#8fb8ff;text-decoration:underline}" +
-            ".suv-app-promo-btn{flex-shrink:0;padding:9px 14px;border-radius:13px;" +
+            ".suv-app-promo-btn{flex-shrink:0;touch-action:manipulation;cursor:pointer;padding:9px 14px;border-radius:13px;" +
             "color:#fff;text-decoration:none;font-size:13px;font-weight:800;white-space:nowrap;" +
             "background:linear-gradient(110deg,#39c7ff,#6971ff 50%,#d84dff)}" +
             ".suv-app-promo-close{flex-shrink:0;width:30px;height:30px;border:0;border-radius:50%;" +
@@ -98,7 +98,7 @@
             '<div class="suv-app-promo-text">' +
             "<strong>اپ Suvreno را نصب کن</strong>" +
             "<span>تمام‌صفحه، سریع‌تر و همیشه روی صفحه گوشی</span>" +
-            '<a class="suv-app-promo-help" href="install-help.html" target="_blank" rel="noopener">هشدار موقع نصب دیدی؟ راهنما</a>' +
+            '<a class="suv-app-promo-help" href="https://suvreno.ir/install-help.html" target="_blank" rel="noopener">هشدار موقع نصب دیدی؟ راهنما</a>' +
             "</div>" +
             '<a class="suv-app-promo-btn" target="_blank" rel="noopener">دانلود اپ</a>' +
             '<button type="button" class="suv-app-promo-close" aria-label="بستن">✕</button>';
@@ -107,12 +107,40 @@
         img.src = ICON_URL;
         img.onerror = function () { img.style.display = "none"; };
 
+        /* باز کردن آدرس در تبِ جدید (بدون اینکه صفحه‌ی چت از جایش برود) */
+        function openTab(url) {
+            try {
+                var t = document.createElement("a");
+                t.href = url;
+                t.target = "_blank";
+                t.rel = "noopener";
+                t.style.display = "none";
+                document.body.appendChild(t);
+                t.click();
+                setTimeout(function () { if (t.parentNode) t.parentNode.removeChild(t); }, 500);
+            } catch (e) {
+                try { window.open(url, "_blank"); } catch (e2) {}
+            }
+        }
+
+        /* دکمه‌ی «دانلود اپ» → صفحه‌ی دانلودِ سایت (نه فایل APK). خودمان باز می‌کنیم تا اسکریپتِ دیگری نتواند کلیک را بگیرد */
         var link = card.querySelector(".suv-app-promo-btn");
         link.href = APK_URL;
-        link.addEventListener("click", function () {
+        link.addEventListener("click", function (e) {
+            e.preventDefault();
+            e.stopPropagation();
             markClosed();
+            openTab(APK_URL);
             hide();
-        });
+        }, true);
+        var help = card.querySelector(".suv-app-promo-help");
+        if (help) {
+            help.addEventListener("click", function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                openTab("https://suvreno.ir/install-help.html");
+            }, true);
+        }
 
         card.querySelector("button").addEventListener("click", function () {
             markClosed();
