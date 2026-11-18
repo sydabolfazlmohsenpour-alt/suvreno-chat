@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "ir.suvreno.app",
+        "sha256_cert_fingerprints": ["40:38:89:D1:91:CD:F3:02:95:DA:91:9E:1C:D3:43:31:96:0B:F8:37:F6:46:20:D2:4D:43:E8:64:ED:19:CD:DF"]
+      }
+    }]

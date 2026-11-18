@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#050b18">
+<title>راهنمای نصب اپ اندروید | Suvreno</title>
+<meta name="description" content="اگر هنگام نصب اپ Suvreno پیام Google Play Protect دیدید: دلیلش چیست، آیا خطرناک است و چطور اپ را نصب کنید.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="pages.css?v=1">
+<link rel="icon" href="logo.svg" type="image/svg+xml">
+<script>(function(){try{var p=localStorage.getItem('AM_THEME_PREF')||'dark';var l=p==='light'||(p==='system'&&window.matchMedia&&matchMedia('(prefers-color-scheme: light)').matches);if(l)document.documentElement.setAttribute('data-theme','light');}catch(e){}})();</script>
+<style>
+.steps{counter-reset:s;list-style:none;padding:0;margin:14px 0}
+.steps>li{counter-increment:s;position:relative;padding:10px 54px 10px 12px;margin:10px 0;border:1px solid var(--line);border-radius:14px;background:var(--card)}
+.steps>li::before{content:counter(s);position:absolute;right:12px;top:10px;width:30px;height:30px;border-radius:50%;background:var(--btn);color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center}
+.steps b{color:var(--ink)}
+details{border:1px solid var(--line);border-radius:14px;background:var(--card);padding:4px 14px;margin:10px 0}
+summary{cursor:pointer;font-weight:700;padding:8px 0}
+.shot{display:block;max-width:300px;width:100%;margin:10px auto;border-radius:14px;border:1px solid var(--line)}
+</style>
+</head>
+<body>
+<header class="site-head">
+  <div class="site-head-in">
+    <a class="brand" href="index.html" aria-label="Suvreno — صفحه‌ی اصلی"><svg viewBox="0 0 100 100" aria-hidden="true"><defs><linearGradient id="lg" x1="0" y1="0" x2="100" y2="100"><stop offset="0" stop-color="#00cfff"/><stop offset=".5" stop-color="#7b4dff"/><stop offset="1" stop-color="#ff4be4"/></linearGradient></defs><circle cx="50" cy="50" r="42" fill="none" stroke="url(#lg)" stroke-width="14"/></svg><span>Suvreno</span></a>
+    <nav class="site-nav" aria-label="منوی اصلی"><a href="about.html">درباره Suvreno</a><a href="pricing.html">تعرفه‌ها</a><a href="terms.html">قوانین و مقررات</a><a href="privacy.html">حریم خصوصی</a><a href="refund.html">بازگشت وجه</a><a href="contact.html">تماس با ما</a></nav>
+    <a class="head-cta" href="index.html">شروع گفتگو</a>
+  </div>
+</header>
+<main class="wrap">
+
+<h1>راهنمای نصب اپ اندروید</h1>
+<p class="lead">هنگام نصب اپ Suvreno ممکن است گوگل پیامی مثل «App blocked to protect your device» نشان دهد. این صفحه توضیح می‌دهد چرا، آیا جای نگرانی هست و چطور اپ را نصب کنید.</p>
+
+<div class="box warn">
+  <p><b>خلاصه:</b> این پیام یعنی اپ از <b>پلی‌استور</b> نصب نمی‌شود و قابلیت‌هایی دارد که مجوزهای حساس می‌خواهند. به معنی «ویروسی بودن» نیست و اپ را هم «تأییدنشده توسط گوگل» نشان می‌دهد، نه «خطرناک». اگر اپ را از سایت رسمی <span class="ltr">suvreno.ir</span> یا فروشگاه‌های مایکت و بازار گرفته‌اید، می‌توانید طبق مراحل زیر نصب کنید.</p>
+</div>
+
+<h2>۱) چرا این پیام می‌آید؟</h2>
+<ul>
+  <li><b>نصب از بیرون پلی‌استور:</b> Play Protect برای اپ‌هایی که از پلی‌استور نیامده‌اند و مجوزهای حساس دارند محتاط‌تر است. این رفتار برای همه‌ی اپ‌های مشابه هم هست.</li>
+  <li><b>مجوزهای قابلیت «کنترل گوشی»:</b> Suvreno می‌تواند دستورهای شما را اجرا کند؛ مثلاً تماس، پیامک، آلارم، یادآور، تقویم و مخاطبین. برای همین این مجوزها در اپ تعریف شده‌اند: تماس (<span class="ltr">CALL_PHONE</span>)، ارسال پیامک (<span class="ltr">SEND_SMS</span>)، مخاطبین، تقویم، میکروفن (برای گفتگوی صوتی)، آلارم و اعلان.</li>
+  <li><b>سرویس دسترس‌پذیری (Accessibility):</b> برای قابلیت «ایجنت» (انجام کار در گوشی). گوگل روی این سرویس حساس است.</li>
+  <li><b>اثر انگشت / قفل گوشی:</b> برای «ورود با Suvreno» استفاده می‌شود. این مورد علت هشدار نیست.</li>
+</ul>
+<p class="small muted">توجه: این‌ها توضیح دلیل‌های محتمل است. گوگل دلیل دقیق هر هشدار را به ما اعلام نمی‌کند.</p>
+
+<h2>۲) آیا Suvreno از اطلاعات یا گوشی من سوءاستفاده می‌کند؟</h2>
+<ul>
+  <li>هیچ‌کدام از مجوزها بدون <b>اجازه‌ی خود شما</b> فعال نمی‌شوند. اندروید موقع نیاز، جداگانه می‌پرسد و می‌توانید هر مجوز را رد کنید یا بعداً از تنظیمات بردارید. اپ بدون مجوز هم گفتگوی متنی را انجام می‌دهد.</li>
+  <li>اپ فقط وقتی از این مجوزها استفاده می‌کند که شما دستوری بدهید؛ مثلاً «به علی زنگ بزن» یا «آلارم ۷ بذار».</li>
+  <li>مجوز <b>خواندن پیامک</b> و <b>خواندن تاریخچه‌ی تماس</b> در اپ تعریف نشده است؛ یعنی اپ نمی‌تواند پیامک‌ها یا لیست تماس‌های شما را بخواند.</li>
+  <li>سرویس دسترس‌پذیری را اندروید خودش <b>دستی</b> و با هشدار روشن می‌کند. اپ نمی‌تواند آن را خودش فعال کند و هر وقت خواستید می‌توانید خاموشش کنید. اگر قابلیت ایجنت را نمی‌خواهید، اصلاً فعالش نکنید.</li>
+  <li>برای ایجنت، پیش از کارهای مهم مثل خرید، پرداخت، ارسال و حذف از شما تأیید گرفته می‌شود.</li>
+  <li>اطلاعات بیشتر درباره‌ی داده‌ها: <a href="privacy.html">حریم خصوصی</a>.</li>
+</ul>
+
+<h2>۳) چطور اپ را نصب کنیم؟</h2>
+<p><b>اول:</b> اپ را فقط از <span class="ltr">suvreno.ir</span> یا فروشگاه مایکت یا بازار بگیرید. فایل APK که از جای دیگری گرفته‌اید را نصب نکنید.</p>
+<p><b>اگر پیام دکمه‌ی «Install anyway» (به‌هرحال نصب کن) دارد:</b> «More details» را بزنید و بعد «Install anyway».</p>
+<p><b>اگر پیام فقط دکمه‌ی OK دارد (مثل «App blocked to protect your device»):</b> باید اسکن Play Protect را موقتاً خاموش کنید:</p>
+<ol class="steps">
+  <li>برنامه‌ی <b>Google Play Store</b> را باز کنید.</li>
+  <li>روی <b>عکس پروفایل</b> خودتان (بالای صفحه) بزنید.</li>
+  <li>روی <b>Play Protect</b> بزنید.</li>
+  <li>روی <b>چرخ‌دنده ⚙️</b> (گوشه‌ی بالای صفحه) بزنید.</li>
+  <li>گزینه‌ی <b>Scan apps with Play Protect</b> (اسکن برنامه‌ها با Play Protect) را <b>خاموش</b> کنید و اگر پرسید، تأیید کنید.</li>
+  <li>برگردید و فایل Suvreno را دوباره باز کنید و <b>نصب</b> را بزنید.</li>
+  <li><b>خیلی مهم:</b> بعد از نصب، همین مسیر را بروید و <b>Scan apps with Play Protect</b> را دوباره <b>روشن</b> کنید تا گوشی‌تان مثل قبل محافظت شود.</li>
+</ol>
+
+<h2>۴) برگرداندن گوشی به حالت اولیه</h2>
+<ul>
+  <li>اسکن Play Protect را همان‌طور که در مرحله‌ی ۷ از بخش ۳ گفته شد دوباره روشن کنید. با این کار هیچ تغییر دیگری روی گوشی نمی‌ماند.</li>
+  <li>اگر برای نصب «Install unknown apps» (نصب برنامه‌های ناشناس) را برای مرورگر یا فایل‌منیجر روشن کردید: تنظیمات ← برنامه‌ها ← همان برنامه ← <b>Install unknown apps</b> ← خاموش.</li>
+  <li>اگر در گوشی‌های سامسونگ «Auto Blocker» را خاموش کردید: تنظیمات ← امنیت و حریم خصوصی ← Auto Blocker ← دوباره روشن.</li>
+</ul>
+
+<h2>۵) پرسش‌های متداول</h2>
+<details><summary>پیام می‌گوید «ممکن است خطر سرقت هویت یا کلاهبرداری مالی» دارد؛ یعنی چه؟</summary>
+<p>این متن عمومی گوگل است و برای هر اپ بیرون از پلی‌استور که مجوزهای حساس بخواهد نمایش داده می‌شود؛ درباره‌ی Suvreno اختصاصی نیست. شما همیشه می‌توانید مجوزهای اپ را از تنظیمات گوشی ← برنامه‌ها ← Suvreno ← مجوزها ببینید و تغییر دهید.</p></details>
+<details><summary>اگر مجوزی را نمی‌خواهم چه؟</summary>
+<p>موقع پرسیدن «اجازه نده» را بزنید یا بعداً از تنظیمات گوشی بردارید. فقط همان قابلیت (مثلاً تماس با دستور صوتی) کار نخواهد کرد.</p></details>
+<details><summary>اپ را از مایکت یا بازار بگیرم هم هشدار می‌آید؟</summary>
+<p>ممکن است. هشدار Play Protect به منبع نصب و وضعیت گوشی بستگی دارد و همیشه قابل پیش‌بینی نیست. مراحل بالا برای آن هم کار می‌کند.</p></details>
+<details><summary>نمی‌خواهم Play Protect را خاموش کنم.</summary>
+<p>می‌توانید به‌جای اپ، Suvreno را روی مرورگر استفاده کنید؛ همه‌ی امکانات گفتگو، تصویر و فایل در <a href="index.html">chat.suvreno.ir</a> هم هست. فقط قابلیت‌های کنترل گوشی در اپ اندروید است.</p></details>
+<details><summary>چطور اپ را کاملاً حذف کنم؟</summary>
+<p>مثل هر اپ دیگر: نگه‌داشتن آیکن Suvreno ← حذف (Uninstall). مجوزها هم با حذف اپ پاک می‌شوند.</p></details>
+
+<h2>۶) هنوز مشکل دارید؟</h2>
+<p>یک عکس از پیامی که می‌بینید و مدل گوشی و نسخه‌ی اندرویدتان را از طریق <a href="index.html?support=1">تیکت پشتیبانی</a> یا ایمیل <a class="ltr" href="mailto:suvreno.ir@gmail.com">suvreno.ir@gmail.com</a> بفرستید.</p>
+
+<p><a class="btn" href="index.html" style="display:inline-block">بازگشت به Suvreno</a></p>
+
+</main>
+<footer class="site-foot">
+  <div class="site-foot-in">
+    <div class="foot-links"><a href="about.html">درباره Suvreno</a><a href="pricing.html">تعرفه‌ها</a><a href="terms.html">قوانین و مقررات</a><a href="privacy.html">حریم خصوصی</a><a href="refund.html">بازگشت وجه</a><a href="contact.html">تماس با ما</a></div>
+    <div class="foot-note">© Suvreno · همه‌ی حقوق محفوظ است.</div>
+  </div>
+</footer>
+</body>
+</html>

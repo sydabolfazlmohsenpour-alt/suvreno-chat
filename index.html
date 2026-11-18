@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+  <meta name="theme-color" content="#050b18">
+  <title>Suvreno | دستیار هوش مصنوعی فارسی</title>
+  <meta name="description" content="Suvreno دستیار هوش مصنوعی فارسی: گفتگوی هوشمند، جست‌وجوی وب، ساخت و ویرایش تصویر، تحلیل فایل و گفتگوی صوتی. اشتراک Start و Plus و بسته‌های اعتبار.">
+
+  <script>try{if(/SuvrenoApp/i.test(navigator.userAgent))document.documentElement.classList.add("in-app")}catch(e){}</script>
+  <script>try{var c=localStorage.getItem("SUV_COLOR");if(c&&/^[a-z0-9-]{2,20}$/.test(c))document.documentElement.setAttribute("data-color",c)}catch(e){}</script>
+  <link rel="preload" href="Vazirmatn.woff2" as="font" type="font/woff2" crossorigin>
+  <script>
+  /* مقیاس متن: پیش‌فرض کمی کوچک‌تر از قبل؛ اگه سیستم/مرورگر متن رو بزرگ‌نمایی کرده باشه جبران می‌شه */
+  (function(){var d=document.documentElement,S={s:.82,m:.92,l:1.02};
+  function ap(){var k="m";try{k=localStorage.getItem("SUV_FS")||"m"}catch(e){}
+  var f=(S[k]||S.m)*(window.__suvComp||1);d.style.setProperty("--fs",f.toFixed(3));}
+  window.__suvApplyFs=ap;ap();
+  document.addEventListener("DOMContentLoaded",function(){try{
+    var cv=document.createElement("canvas").getContext("2d");cv.font="100px monospace";var w=cv.measureText("mmmmmmmmmm").width;
+    var sp=document.createElement("span");sp.style.cssText="position:absolute;visibility:hidden;white-space:nowrap;left:-9999px;top:0;font:100px monospace";sp.textContent="mmmmmmmmmm";document.body.appendChild(sp);
+    var r=sp.getBoundingClientRect().width/w;sp.parentNode.removeChild(sp);
+    if(r>1.06&&r<2.2){window.__suvComp=Math.max(.7,1/r);ap();}
+  }catch(e){}});})();
+  </script>
+
+  <link rel="stylesheet" href="style.css?v=26">
+  <link rel="stylesheet" href="theme.css?v=6">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" id="favIcon" href="logo.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" id="touchIcon" href="logo.svg">
+</head>
+
+<body>
+
+<div id="deleteConfirmModal" class="delete-modal">
+  <div class="delete-modal-backdrop"></div>
+  <div class="delete-modal-box">
+    <div class="delete-modal-icon"><span>!</span></div>
+    <div class="delete-modal-content">
+      <h3 id="deleteModalTitle" data-i18n="delmodal.title">حذف گفت‌وگو؟</h3>
+      <p id="deleteModalText" data-i18n="delmodal.text">این گفت‌وگو برای همیشه حذف می‌شود.</p>
+    </div>
+    <div class="delete-modal-actions">
+      <button id="deleteCancelBtn" class="delete-cancel-btn" type="button" data-i18n="common.cancel">انصراف</button>
+      <button id="deleteConfirmBtn" class="delete-confirm-btn" type="button" data-i18n="common.deleteAction">حذف کردن</button>
+    </div>
+  </div>
+</div>
+
+
+<div id="app">
+
+  <!-- ===== HEADER ===== -->
+  <header class="topbar">
+
+    <div class="header-left">
+      <button class="icon-btn sidebar-toggle-btn" id="sidebarToggleBtn" type="button" aria-label="باز کردن منو">
+        <span class="two-lines"><i></i><i></i></span>
+      </button>
+    </div>
+
+    <div class="brand-logo-wrap" id="headerLogoWrap">
+      <div class="suv-wordmark" id="suvWordmark" aria-label="Suvreno">Suvreno</div>
+      <div class="am-logo-anim" id="headerLogoAnim">
+        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='100' y2='100'%3E%3Cstop offset='0' stop-color='%2300cfff'/%3E%3Cstop offset='0.5' stop-color='%237b4dff'/%3E%3Cstop offset='1' stop-color='%23ff4be4'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='50' cy='50' r='42' fill='none' stroke='url(%23g)' stroke-width='14'/%3E%3C/svg%3E" class="am-logo-piece piece-a am-logo-img" alt="">
+        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='100' y2='100'%3E%3Cstop offset='0' stop-color='%2300cfff'/%3E%3Cstop offset='0.5' stop-color='%237b4dff'/%3E%3Cstop offset='1' stop-color='%23ff4be4'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='50' cy='50' r='42' fill='none' stroke='url(%23g)' stroke-width='14'/%3E%3C/svg%3E" class="am-logo-piece piece-b am-logo-img" alt="">
+        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='100' y2='100'%3E%3Cstop offset='0' stop-color='%2300cfff'/%3E%3Cstop offset='0.5' stop-color='%237b4dff'/%3E%3Cstop offset='1' stop-color='%23ff4be4'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='50' cy='50' r='42' fill='none' stroke='url(%23g)' stroke-width='14'/%3E%3C/svg%3E" class="am-logo-piece piece-c am-logo-img" alt="">
+        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='100' y2='100'%3E%3Cstop offset='0' stop-color='%2300cfff'/%3E%3Cstop offset='0.5' stop-color='%237b4dff'/%3E%3Cstop offset='1' stop-color='%23ff4be4'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='50' cy='50' r='42' fill='none' stroke='url(%23g)' stroke-width='14'/%3E%3C/svg%3E" class="am-logo-final am-logo-img" id="headerLogoFinal" alt="Suvreno">
+      </div>
+    </div>
+
+    <div class="header-right">
+      <button class="icon-btn new-chat-header-btn" id="newChatHeaderBtn" type="button" aria-label="گفت‌وگوی جدید">
+        <span class="plus-icon">＋</span>
+      </button>
+      <button class="icon-btn chat-menu-btn" id="chatMenuBtn" type="button" aria-label="منوی گفت‌وگو">
+        <span class="dots"><i></i><i></i><i></i></span>
+      </button>
+    </div>
+
+  </header>
+
+  <!-- ===== CHAT CONTEXT MENU (three dots) ===== -->
+  <div class="chat-context-menu" id="chatContextMenu">
+    <button type="button" data-action="rename">✏️ <span data-i18n="ctx.rename">تغییر نام گفت‌وگو</span></button>
+    <button type="button" data-action="pin">📌 <span data-i18n="ctx.pin">سنجاق کردن</span></button>
+    <button type="button" data-action="folder">📁 <span data-i18n="ctx.folder">انتقال به پوشه</span></button>
+    <button type="button" data-action="clear-context">🔄 <span data-i18n="ctx.clearContext">پاک‌کردن زمینه‌ی گفتگو</span></button>
+    <button type="button" data-action="share">📤 <span data-i18n="ctx.share">اشتراک‌گذاری</span></button>
+    <button type="button" data-action="delete" class="danger">🗑 <span data-i18n="ctx.delete">حذف گفت‌وگو</span></button>
+  </div>
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-scroll">
+      <div class="sidebar-head">
+        <strong>Suvreno</strong>
+        <button class="close-sidebar" id="closeSidebar" type="button">×</button>
+      </div>
+      <button class="side-action" id="galleryBtn" type="button"><span>🖼️</span><span data-i18n="side.gallery">گالری Suvreno</span></button>
+      <button class="side-action" id="sideImageGenBtn" type="button"><span>🎨</span><span data-i18n="side.imageGen">ساخت تصویر</span></button>
+      <button class="side-action" id="sideImageEditBtn" type="button"><span>🪄</span><span data-i18n="side.imageEdit">ویرایش تصویر</span></button>
+      <button class="side-action" id="memoryBtn" type="button" style="display:none" aria-hidden="true" tabindex="-1"><span>🧠</span><span data-i18n="side.memory">حافظه</span></button>
+      <button class="side-action" id="personalityBtn" type="button" style="display:none" aria-hidden="true" tabindex="-1"><span>🎭</span><span data-i18n="side.personality">شخصیت Suvreno</span></button>
+      <button class="side-action" id="shareChatBtn" type="button"><span>📤</span><span data-i18n="side.share">اشتراک‌گذاری این گفت‌وگو</span></button>
+
+      <button class="side-action" id="sideDownloadAppBtn" type="button" style="display:none"><span>📲</span><span>دانلود اپ اندروید</span></button>
+      <script>(function(){try{var b=document.getElementById("sideDownloadAppBtn");if(!b)return;var ua=navigator.userAgent||"";var inApp=/SuvrenoApp/i.test(ua)||window.SuvrenoNative||window.Capacitor||navigator.standalone||(window.matchMedia&&window.matchMedia("(display-mode: standalone)").matches);if(!inApp&&/Android/i.test(ua))b.style.display="";b.addEventListener("click",function(){window.open("https://suvreno.ir/download.html","_blank","noopener")})}catch(e){}})();</script>
+
+      <button class="side-action folders-toggle-btn" id="foldersToggleBtn" type="button"><span>🗂️</span><span data-i18n="side.folders">پوشه‌ها</span><span class="folders-toggle-caret">›</span></button>
+      <div class="folders-box" id="foldersBox" style="display:none">
+        <div class="folder-chips" id="folderChips"></div>
+        <button class="clear-memory" id="addFolderBtn" type="button" data-i18n="side.addFolder">+ پوشه‌ی جدید</button>
+      </div>
+
+      <div class="usage-stats" id="usageStats"></div>
+
+      <input type="text" id="historySearchInput" class="history-search" placeholder="جستجو در گفت‌وگوها..." data-i18n-placeholder="side.searchPlaceholder">
+
+      <div id="chatHistory"></div>
+    </div>
+
+    <!-- ===== SIDEBAR FOOTER: login button (guest) / account chip (signed-in) ===== -->
+    <div class="sidebar-footer" id="sidebarFooter">
+      <button class="sidebar-login-btn" id="sidebarLoginBtn" type="button">
+        <span>🔑</span><span data-i18n="side.login">ورود / ثبت‌نام در Suvreno</span>
+      </button>
+      <div class="account-row-with-gear" id="accountRowWithGear" style="display:none">
+        <button class="sidebar-account-chip" id="sidebarAccountChip" type="button">
+          <span class="account-avatar" id="accountAvatar">؟</span>
+          <span class="account-chip-text">
+            <span class="account-chip-name" id="accountChipName"></span>
+            <span class="account-chip-sub" data-i18n="side.accountSub">حساب کاربری</span>
+          </span>
+        </button>
+        <button class="settings-gear-btn" id="settingsGearBtn" type="button" aria-label="تنظیمات">⚙️</button>
+      </div>
+      <nav class="sidebar-legal" aria-label="اطلاعات و قوانین"><a href="pricing.html">تعرفه‌ها</a><a href="about.html">درباره ما</a><a href="terms.html">قوانین و مقررات</a><a href="privacy.html">حریم خصوصی</a><a href="refund.html">بازگشت وجه</a><a href="contact.html">تماس با ما</a></nav>
+    </div>
+  </aside>
+
+  <div class="overlay" id="overlay"></div>
+
+  <main class="main">
+    <section class="messages" id="messages">
+      <div class="welcome-logo-wrap" id="welcomeLogoWrap">
+        <div class="am-logo-anim am-logo-anim--big" id="welcomeLogoAnim">
+          <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='100' y2='100'%3E%3Cstop offset='0' stop-color='%2300cfff'/%3E%3Cstop offset='0.5' stop-color='%237b4dff'/%3E%3Cstop offset='1' stop-color='%23ff4be4'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='50' cy='50' r='42' fill='none' stroke='url(%23g)' stroke-width='14'/%3E%3C/svg%3E" class="am-logo-piece piece-a am-logo-img" alt="">
+          <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='100' y2='100'%3E%3Cstop offset='0' stop-color='%2300cfff'/%3E%3Cstop offset='0.5' stop-color='%237b4dff'/%3E%3Cstop offset='1' stop-color='%23ff4be4'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='50' cy='50' r='42' fill='none' stroke='url(%23g)' stroke-width='14'/%3E%3C/svg%3E" class="am-logo-piece piece-b am-logo-img" alt="">
+          <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='100' y2='100'%3E%3Cstop offset='0' stop-color='%2300cfff'/%3E%3Cstop offset='0.5' stop-color='%237b4dff'/%3E%3Cstop offset='1' stop-color='%23ff4be4'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='50' cy='50' r='42' fill='none' stroke='url(%23g)' stroke-width='14'/%3E%3C/svg%3E" class="am-logo-piece piece-c am-logo-img" alt="">
+          <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='100' y2='100'%3E%3Cstop offset='0' stop-color='%2300cfff'/%3E%3Cstop offset='0.5' stop-color='%237b4dff'/%3E%3Cstop offset='1' stop-color='%23ff4be4'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='50' cy='50' r='42' fill='none' stroke='url(%23g)' stroke-width='14'/%3E%3C/svg%3E" class="am-logo-final am-logo-img" alt="Suvreno">
+        </div>
+      </div>
+    </section>
+
+    <div class="welcome-info" id="welcomeInfo">
+      <p class="welcome-info-text">Suvreno — دستیار هوش مصنوعی فارسی: گفتگو، جست‌وجوی وب، ساخت و ویرایش تصویر، تحلیل فایل و گفتگوی صوتی</p>
+      <nav class="legal-links" aria-label="اطلاعات و قوانین"><a href="pricing.html">تعرفه‌ها</a><a href="about.html">درباره ما</a><a href="terms.html">قوانین و مقررات</a><a href="privacy.html">حریم خصوصی</a><a href="refund.html">بازگشت وجه</a><a href="contact.html">تماس با ما</a></nav>
+    </div>
+
+    <div class="image-viewer" id="imageViewer">
+      <button id="closeImageViewer" type="button">×</button>
+      <img id="fullscreenImage" alt="تصویر تولیدشده">
+    </div>
+
+    <button class="scroll-bottom-btn" id="scrollToBottomBtn" type="button" aria-label="برو به آخرین پیام">↓</button>
+
+    <!-- ===== COMPOSER PLUS MENU ===== -->
+    <div class="composer-menu" id="composerMenu">
+      <button type="button" id="menuMicBtn"><span>🎙️</span><span data-i18n="menu.mic">ورودی صوتی</span></button>
+      <button type="button" id="menuAttachBtn"><span>📎</span><span data-i18n="menu.attach">افزودن فایل و عکس</span></button>
+      <button type="button" id="menuSearchBtn"><span>🌐</span><span id="menuSearchLabel" data-i18n="menu.searchOff">جستجوی وب: خاموش</span></button>
+    </div>
+
+    <!-- ===== PROMPT LIBRARY PANEL (populated by script.js, see PROMPT_LIBRARY) ===== -->
+    <div class="prompt-library-menu" id="promptLibraryMenu">
+      <div class="prompt-library-list" id="promptLibraryList"></div>
+      <div class="prompt-library-custom" id="promptLibraryCustomBox">
+        <div class="prompt-library-custom-label" data-i18n="promptlib.customLabel">پرامپت‌های شخصیِ خودت (حداکثر ۶ تا)</div>
+        <div class="prompt-library-add-row">
+          <input type="text" id="customPromptInput" placeholder="یه متنِ آماده‌ی کوتاه بنویس..." maxlength="80" data-i18n-placeholder="promptlib.customPlaceholder">
+          <button type="button" id="addCustomPromptBtn"><span class="add-plus-icon">＋</span><span data-i18n="common.add">افزودن</span></button>
+        </div>
+      </div>
+    </div>
+
+    <section class="composer-wrap">
+      <div class="composer">
+        <button class="round-action send-btn" id="sendBtn" aria-label="ارسال" type="button">
+          <span class="send-icon">➤</span>
+          <span class="stop-icon">■</span>
+          <span class="voice-icon"><i></i><i></i><i></i><i></i></span>
+        </button>
+        <textarea id="messageInput" rows="1" placeholder="پیامت رو بنویس..." autocomplete="off" data-i18n-placeholder="chat.composerPlaceholder"></textarea>
+        <button class="round-action plus-btn" id="composerPlusBtn" aria-label="افزودن" type="button"><span>＋</span></button>
+        <input type="file" id="imageInput" multiple hidden>
+        <input type="file" id="fileAnalysisInput" multiple hidden>
+      </div>
+    </section>
+  </main>
+
+  <div class="modal" id="imageModal">
+    <div class="modal-card image-generator">
+      <button class="modal-close" id="closeImageModal" type="button">×</button>
+      <div class="modal-icon">✦</div>
+      <h2 data-i18n="side.imageGen">ساخت تصویر</h2>
+      <p class="modal-subtitle" data-i18n="imggen.subtitle">ایده‌ات رو بگو تا برات تبدیلش کنم به تصویر 🎨</p>
+      <textarea id="imagePrompt" class="image-prompt" placeholder="مثلاً: یک ماشین اسپرت قرمز در جاده ساحلی هنگام غروب..." data-i18n-placeholder="imggen.promptPlaceholder"></textarea>
+
+      <div class="quality-toggle" id="qualityToggle">
+        <button class="quality-btn active" id="qualityFastBtn" type="button" data-quality="fast" data-i18n="imggen.fast">⚡ سرعت</button>
+        <button class="quality-btn" id="qualityHighBtn" type="button" data-quality="quality" data-i18n="imggen.quality">✨ کیفیت بالا</button>
+      </div>
+
+      <div class="ideas-title" data-i18n="imggen.ideasTitle">ایده‌های حرفه‌ای</div>
+
+      <div class="prompt-grid">
+        <button class="prompt-card" type="button" data-prompt="یک شهر فوق‌مدرن در شب، ساختمان‌های شیشه‌ای عظیم، نورهای نئون آبی و بنفش، خیابان خیس با انعکاس نورها، پهپادهای کوچک در آسمان، فضای سینمایی، فوق‌واقع‌گرایانه، جزئیات بسیار بالا، نورپردازی حرفه‌ای">
+          <strong>🌆 شهر آینده</strong><span>یک کلان‌شهر فوق‌مدرن و سینمایی</span>
+        </button>
+        <button class="prompt-card" type="button" data-prompt="یک خودروی اسپرت قرمز لوکس در جاده ساحلی، دریای آبی و کوهستان در پس‌زمینه، نور طلایی غروب، انعکاس نور روی بدنه، نمای سه‌ربع از جلو، عمق میدان طبیعی، عکاسی حرفه‌ای، فوق‌واقع‌گرایانه، جزئیات بسیار بالا">
+          <strong>🏎️ ماشین اسپرت</strong><span>خودروی لوکس در جاده ساحلی</span>
+        </button>
+        <button class="prompt-card" type="button" data-prompt="یک اژدهای عظیم یخی در میان کوهستان پوشیده از برف، بال‌های شفاف یخی، کولاک و مه در اطراف، نور سرد ماه، چشم‌های درخشان، فضای حماسی فانتزی، سینمایی، فوق‌واقع‌گرایانه، جزئیات بسیار بالا">
+          <strong>🐉 اژدهای یخی</strong><span>یک صحنه فانتزی حماسی</span>
+        </button>
+        <button class="prompt-card" type="button" data-prompt="یک جت خصوصی مشکی و لوکس در حال پرواز بر فراز اقیانوس، آسمان آبی روشن، نور طلایی خورشید روی بدنه، ابرهای نرم در پایین، نمای حرفه‌ای عکاسی هوایی، فوق‌واقع‌گرایانه، جزئیات بسیار بالا">
+          <strong>✈️ جت لوکس</strong><span>هواپیمای خصوصی در آسمان</span>
+        </button>
+        <button class="prompt-card" type="button" data-prompt="یک جنگل عمیق و مرموز هنگام طلوع آفتاب، درختان بسیار بلند، پرتوهای نور میان شاخه‌ها، مه سبک روی زمین، مسیر باریک در میان جنگل، فضای سینمایی و آرام، رنگ‌های طبیعی، عکاسی واقع‌گرایانه، جزئیات بالا">
+          <strong>🌲 جنگل مرموز</strong><span>طبیعت سینمایی و آرام</span>
+        </button>
+        <button class="prompt-card" type="button" data-prompt="گروهی از ربات‌های انسان‌نما در خیابان یک کلان‌شهر آینده‌نگر در شب، باران، انعکاس نورهای نئونی روی آسفالت خیس، خودروهای آینده، ساختمان‌های عظیم، فضای علمی‌تخیلی سینمایی، فوق‌واقع‌گرایانه، جزئیات بسیار بالا">
+          <strong>🤖 ربات‌های آینده</strong><span>دنیای علمی‌تخیلی</span>
+        </button>
+        <button class="prompt-card" type="button" data-prompt="یک خانه مدرن و بسیار لوکس روی صخره‌ای شناور در میان ابرها، آبشارهایی از لبه صخره، طلوع خورشید، کوه‌های دوردست، معماری فوق‌مدرن، نورپردازی طبیعی، نمای سینمایی، جزئیات بسیار بالا">
+          <strong>☁️ خانه روی ابرها</strong><span>معماری خارق‌العاده</span>
+        </button>
+        <button class="prompt-card" type="button" data-prompt="یک سیاره ناشناخته عظیم در فضا، حلقه‌های نورانی اطراف سیاره، سحابی‌های رنگارنگ، میلیون‌ها ستاره در پس‌زمینه، نورپردازی سینمایی، حس مقیاس بسیار عظیم، فضای علمی‌تخیلی، فوق‌واقع‌گرایانه، جزئیات بسیار بالا">
+          <strong>🌌 دنیای فضایی</strong><span>یک منظره عظیم کهکشانی</span>
+        </button>
+      </div>
+
+      <button class="generate-btn" id="generateBtn" type="button" data-i18n="imggen.generateBtn">✨ تولید تصویر</button>
+    </div>
+  </div>
+
+  <div class="modal" id="imageEditModal">
+    <div class="modal-card image-generator">
+      <button class="modal-close" id="closeImageEditModal" type="button">×</button>
+      <div class="modal-icon">🖌️</div>
+      <h2 data-i18n="side.imageEdit">ویرایش تصویر</h2>
+      <p class="modal-subtitle" data-i18n="imgedit.subtitle">اول یه عکس آپلود کن، بعد بگو چه تغییری می‌خوای 🎨</p>
+
+      <div class="edit-upload-zone" id="editUploadZone">
+        <input type="file" id="editImageInput" accept="image/*" hidden>
+        <div class="edit-upload-empty" id="editUploadEmpty">
+          <span class="edit-upload-icon">📤</span>
+          <span data-i18n="imgedit.uploadHint">برای آپلود عکس اینجا بزن</span>
+        </div>
+        <div class="edit-upload-preview" id="editUploadPreview" style="display:none;">
+          <img id="editUploadPreviewImg" alt="عکس آپلودشده">
+          <button type="button" class="edit-upload-remove" id="editUploadRemoveBtn" aria-label="حذف عکس">×</button>
+        </div>
+      </div>
+
+      <textarea id="editPrompt" class="image-prompt" placeholder="مثلاً: آسمان این تصویر را غروب کن..." data-i18n-placeholder="imgedit.promptPlaceholder"></textarea>
+
+      <div class="ideas-title" data-i18n="imgedit.ideasTitle">پرامپت‌های آماده‌ی ویرایش</div>
+      <div class="prompt-grid" id="editPromptGrid"></div>
+
+      <div class="edit-status" id="editStatus" style="display:none;"></div>
+
+      <button class="generate-btn" id="editApplyBtn" type="button" data-i18n="imgedit.applyBtn">✨ اعمال ویرایش</button>
+    </div>
+  </div>
+
+  <div class="modal" id="memoryModal">
+    <div class="modal-card">
+      <button class="modal-close" id="closeMemoryModal" type="button">×</button>
+      <div class="modal-icon">🧠</div>
+      <h2 data-i18n="memmodal.title">حافظه Suvreno</h2>
+      <p class="modal-subtitle" data-i18n="memmodal.subtitle">چیزهایی که می‌خوای Suvreno به خاطر داشته باشه</p>
+      <div class="mem-toggle-row" id="memToggleRow">
+        <div class="mem-toggle-text"><b id="memToggleTitle">حافظه دائمی: روشن</b><span id="memToggleHint">روشن: Suvreno چیزهای مهم رو برای همیشه به خاطر می‌سپاره.</span></div>
+        <button type="button" id="memToggleBtn" class="mem-switch on" role="switch" aria-checked="true" aria-label="خاموش/روشن حافظه"><span class="mem-switch-knob"></span></button>
+      </div>
+      <textarea id="memoryInput" class="memory-input" placeholder="مثلاً: اسم من ابوالفضل است..." data-i18n-placeholder="memmodal.placeholder"></textarea>
+      <button class="generate-btn" id="saveMemoryBtn" type="button" data-i18n="memmodal.save">ذخیره حافظه</button>
+      <button class="clear-memory" id="clearMemoryBtn" type="button" data-i18n="memmodal.clear">پاک کردن حافظه</button>
+
+      <div class="context-reset-box">
+        <p class="modal-subtitle" data-i18n="memmodal.contextHint">اگه حس کردی Suvreno گیج شده یا جواب‌های بی‌ربط می‌ده (نه به‌خاطر یادداشت حافظه بالا)، می‌تونی فقط زمینه‌ی گفتگوی اخیر رو ریست کنی:</p>
+        <button class="clear-context-btn" id="clearContextBtn" type="button" data-i18n="memmodal.clearContextBtn">🔄 پاک‌کردن زمینه‌ی گفتگو</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="personalityModal">
+    <div class="modal-card">
+      <button class="modal-close" id="closePersonalityModal" type="button">×</button>
+      <div class="modal-icon">🎭</div>
+      <h2 data-i18n="side.personality">شخصیت Suvreno</h2>
+      <p class="modal-subtitle" data-i18n="persona.subtitle">دوست داری Suvreno با چه لحنی باهات صحبت کنه؟</p>
+      <div class="prompt-grid">
+        <button class="prompt-card persona-card active" type="button" data-persona="friendly"><strong data-i18n="persona.friendlyTitle">😄 خودمونی و صمیمی</strong><span data-i18n="persona.friendlyDesc">مثل یه دوست باحال و مهربون</span></button>
+        <button class="prompt-card persona-card" type="button" data-persona="mentor"><strong data-i18n="persona.mentorTitle">🧑‍🏫 معلم و مربی</strong><span data-i18n="persona.mentorDesc">دقیق، صبور و آموزشی</span></button>
+        <button class="prompt-card persona-card" type="button" data-persona="funny"><strong data-i18n="persona.funnyTitle">😂 شوخ و بامزه</strong><span data-i18n="persona.funnyDesc">پر از شوخی و طنز</span></button>
+        <button class="prompt-card persona-card" type="button" data-persona="formal"><strong data-i18n="persona.formalTitle">👔 رسمی و حرفه‌ای</strong><span data-i18n="persona.formalDesc">مودب، دقیق و بدون شوخی</span></button>
+      </div>
+    </div>
+  </div>
+
+  <div id="renameModal" class="modal">
+    <div class="modal-card rename-card">
+      <button class="modal-close" id="closeRenameModal" type="button">×</button>
+      <h2 data-i18n="ctx.rename">تغییر نام گفت‌وگو</h2>
+      <input type="text" id="renameChatInput" class="rename-modal-input" placeholder="نام جدید..." data-i18n-placeholder="rename.placeholder">
+      <button class="generate-btn" id="confirmRenameBtn" type="button" data-i18n="common.save">ذخیره</button>
+    </div>
+  </div>
+
+  <div class="modal" id="accountModal">
+    <div class="modal-card">
+      <button class="modal-close" id="closeAccountModal" type="button">×</button>
+      <div class="account-modal-avatar" id="accountModalAvatar">؟</div>
+      <h2 id="accountModalName" data-i18n="account.title">حساب من</h2>
+      <p class="modal-subtitle" id="accountModalEmail"></p>
+
+      <div class="account-field">
+        <label for="accountNameInput" data-i18n="account.displayName">نام نمایشی</label>
+        <input type="text" id="accountNameInput" placeholder="نام..." data-i18n-placeholder="account.namePlaceholder">
+      </div>
+      <button class="generate-btn" id="saveAccountNameBtn" type="button" data-i18n="account.saveName">ذخیره نام</button>
+
+      <div class="account-verify-box" id="accountVerifyBox" style="display:none">
+        <div class="id-box-label" data-i18n="account.verifyEmail">تأیید ایمیل ⚠️</div>
+        <p class="modal-subtitle" style="margin:4px 0 10px" data-i18n="account.verifyHint">یه کد ۶رقمی به ایمیلت فرستاده شده؛ همینجا واردش کن.</p>
+        <input type="text" id="verifyCodeInput" placeholder="کد ۶رقمی" maxlength="6" inputmode="numeric" data-i18n-placeholder="account.codePlaceholder">
+        <button class="generate-btn" id="verifyCodeBtn" type="button" data-i18n="account.verifyCode">تأیید کد</button>
+        <button class="clear-memory" id="resendVerifyBtn" type="button" data-i18n="account.resendCode">ارسال دوباره‌ی کد</button>
+      </div>
+      <p class="account-verified-note" id="accountVerifiedNote" style="display:none" data-i18n="account.verified">✅ ایمیل تأیید شده</p>
+
+      <button class="clear-memory" id="logoutBtn" type="button" data-i18n="account.logout">🚪 خروج از حساب</button>
+      <button class="clear-memory danger-text" id="deleteAccountBtn" type="button" data-i18n="account.deleteAccount">🗑 حذف حساب</button>
+    </div>
+  </div>
+
+  <div class="modal" id="galleryModal">
+    <div class="modal-card gallery-modal-card">
+      <button class="modal-close" id="closeGalleryModal" type="button">×</button>
+      <h2 data-i18n="gallery.title">🖼️ گالری Suvreno</h2>
+      <p class="modal-subtitle" data-i18n="gallery.subtitle">تصاویری که با حساب خودت ساختی — فقط برای تو قابل‌دیدنه.</p>
+      <div class="gallery-grid" id="galleryGrid"></div>
+      <p class="gallery-empty" id="galleryEmpty" style="display:none" data-i18n="gallery.empty">هنوز تصویری نساختی 🎨</p>
+      <button class="clear-memory" id="galleryLoadMoreBtn" type="button" style="display:none" data-i18n="gallery.loadMore">نمایش بیشتر</button>
+    </div>
+  </div>
+
+  <div class="modal" id="galleryViewerModal">
+    <div class="modal-card gallery-viewer-card">
+      <button class="modal-close" id="closeGalleryViewer" type="button">×</button>
+      <img id="galleryViewerImg" src="" alt="">
+      <p class="modal-subtitle" id="galleryViewerPrompt"></p>
+      <div class="backup-row">
+        <a id="galleryViewerDownload" download="suvreno-image.png"><button type="button" data-i18n="common.download">⬇️ دانلود</button></a>
+        <button id="galleryViewerDelete" type="button" class="danger-text" data-i18n="common.deleteShort">🗑 حذف</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="folderPickerModal">
+    <div class="modal-card">
+      <button class="modal-close" id="closeFolderPicker" type="button">×</button>
+      <h2 data-i18n="ctx.folder">انتقال به پوشه</h2>
+      <div id="folderPickerList" class="folder-picker-list"></div>
+      <div class="account-field">
+        <label for="newFolderNameInput" data-i18n="folder.newLabel">یا یه پوشه‌ی جدید بساز</label>
+        <input type="text" id="newFolderNameInput" placeholder="مثلاً: برنامه‌نویسی 💻" data-i18n-placeholder="folder.namePlaceholder">
+      </div>
+      <button class="generate-btn" id="createFolderConfirmBtn" type="button" data-i18n="folder.createAndMove">ساخت و انتقال</button>
+    </div>
+  </div>
+
+  <div class="voice-notebook-fullscreen" id="voiceNotebookModal">
+    <button class="vn-close-btn" id="closeVoiceNotebook" type="button" aria-label="بستن">×</button>
+    <button class="vn-voice-pick-btn" id="voiceSelectBtn" type="button" aria-label="انتخاب صدا">🗣️</button>
+    <div class="voice-notebook-orb-wrap">
+      <div class="voice-notebook-orb" id="voiceNotebookOrb"></div>
+    </div>
+    <p class="voice-notebook-state" id="voiceNotebookState" data-i18n="voice.tapToStart">برای شروع، رو دایره بزن</p>
+    <button class="vn-mute-btn" id="voiceMuteBtn" type="button" aria-label="قطع/وصل میکروفن">
+      <span class="vn-mute-icon-on">🎧</span>
+      <span class="vn-mute-icon-off">🔇</span>
+    </button>
+  </div>
+
+  <div class="modal" id="createFolderModal">
+    <div class="modal-card create-folder-card">
+      <button class="modal-close" id="closeCreateFolderModal" type="button">×</button>
+      <div class="create-folder-icon">📁</div>
+      <h2 id="createFolderModalTitle" data-i18n="folder.newFolder">پوشه‌ی جدید</h2>
+      <div class="account-field">
+        <label for="createFolderNameInput" data-i18n="folder.nameLabel">اسم پوشه</label>
+        <input type="text" id="createFolderNameInput" placeholder="مثلاً: برنامه‌نویسی 💻" maxlength="60" autocomplete="off" data-i18n-placeholder="folder.namePlaceholder">
+      </div>
+      <div class="create-folder-actions">
+        <button class="folder-cancel-btn" id="cancelCreateFolderBtn" type="button" data-i18n="common.cancel">انصراف</button>
+        <button class="generate-btn" id="confirmCreateFolderBtn" type="button" data-i18n="folder.create">ساخت پوشه</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="voiceSelectModal">
+    <div class="modal-card">
+      <button class="modal-close" id="closeVoiceSelectModal" type="button">×</button>
+      <h2 data-i18n="voice.selectTitle">🗣️ انتخاب صدای Suvreno</h2>
+      <div id="voiceSelectList" class="voice-select-list"></div>
+    </div>
+  </div>
+
+  <div class="modal" id="settingsModal">
+    <div class="modal-card settings-modal-card">
+      <button class="modal-close" id="closeSettingsModal" type="button">×</button>
+      <h2 data-i18n="settings.title">⚙️ تنظیمات Suvreno</h2>
+
+      <div class="settings-section">
+        <div class="id-box-label" data-i18n="settings.appearance">ظاهر برنامه</div>
+        <div class="theme-switch-row" id="themeSwitchRow">
+          <button class="theme-switch-btn" data-theme-choice="dark" type="button"><span>🌙</span><span data-i18n="settings.theme.dark">تیره</span></button>
+          <button class="theme-switch-btn" data-theme-choice="light" type="button"><span>☀️</span><span data-i18n="settings.theme.light">روشن</span></button>
+          <button class="theme-switch-btn" data-theme-choice="system" type="button"><span>🖥️</span><span data-i18n="settings.theme.system">پیش‌فرض سیستم</span></button>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <div class="id-box-label" id="colorThemeLabel">تمِ رنگی</div>
+        <div class="theme-switch-row color-grid" id="colorThemeRow">
+          <button class="theme-switch-btn" data-color-choice="firouzeh" type="button"><i class="cs-dot"></i><span class="cs-name">شبِ فیروزه</span></button>
+          <button class="theme-switch-btn" data-color-choice="suvreno" type="button"><i class="cs-dot"></i><span class="cs-name">Suvreno</span></button>
+          <button class="theme-switch-btn" data-color-choice="minimal" type="button"><i class="cs-dot"></i><span class="cs-name">مینیمال</span></button>
+          <button class="theme-switch-btn" data-color-choice="amoled" type="button"><i class="cs-dot"></i><span class="cs-name">AMOLED</span></button>
+          <button class="theme-switch-btn" data-color-choice="sunset" type="button"><i class="cs-dot"></i><span class="cs-name">غروب</span></button>
+          <button class="theme-switch-btn" data-color-choice="forest" type="button"><i class="cs-dot"></i><span class="cs-name">جنگل</span></button>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <div class="id-box-label">اندازه‌ی متن</div>
+        <div class="theme-switch-row" id="fontSizeRow">
+          <button class="theme-switch-btn" data-fs-choice="s" type="button"><span style="font-size:13px">آ</span><span>کوچک</span></button>
+          <button class="theme-switch-btn" data-fs-choice="m" type="button"><span style="font-size:17px">آ</span><span>متوسط</span></button>
+          <button class="theme-switch-btn" data-fs-choice="l" type="button"><span style="font-size:21px">آ</span><span>بزرگ</span></button>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <div class="id-box-label" data-i18n="settings.language">زبان</div>
+        <div class="theme-switch-row lang-switch-row" id="languageSwitchRow">
+          <button class="theme-switch-btn lang-switch-btn" data-lang-choice="fa" type="button"><span>🇮🇷</span><span>فارسی</span></button>
+          <button class="theme-switch-btn lang-switch-btn" data-lang-choice="en" type="button"><span>🇬🇧</span><span>English</span></button>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <div class="id-box-label" data-i18n="settings.voice">صدا</div>
+        <button class="clear-memory" id="settingsVoiceBtn" type="button" data-i18n="settings.chooseVoice">🗣️ انتخاب صدا</button>
+      </div>
+
+      <div class="settings-section" id="installHelpSec">
+        <div class="id-box-label">نصب اپ اندروید</div>
+        <button class="clear-memory" id="installHelpBtn" type="button" onclick="window.open('install-help.html','_blank','noopener')">📲 راهنمای نصب و هشدار Play Protect</button>
+      </div>
+      <style>html.in-app #installHelpSec{display:none}</style>
+
+      <div class="settings-section">
+        <div class="id-box-label" data-i18n="settings.account">حساب کاربری</div>
+        <button class="clear-memory" id="settingsAccountBtn" type="button" data-i18n="settings.myAccount">👤 حساب من</button>
+      </div>
+
+      <div class="settings-section" id="settingsInviteSection" style="display:none">
+        <div class="id-box-label" id="settingsInviteLabel">🎁 کد معرف</div>
+        <p class="modal-subtitle" id="settingsInviteHint" style="margin:4px 0 8px"></p>
+        <div id="settingsInviteCode" dir="ltr" style="font-family:monospace;font-size:24px;font-weight:800;letter-spacing:4px;text-align:center;padding:10px;border-radius:12px;background:rgba(127,127,127,.15);margin-bottom:8px;user-select:all"></div>
+        <button class="clear-memory" id="settingsInviteCopyBtn" type="button">📋 کپی کد معرف</button>
+      </div>
+
+      <div class="settings-section" id="settingsNudgeSection" style="display:none">
+        <div class="id-box-label" id="nudgeLabel">💬 پیام‌های دوستانه</div>
+        <div class="mem-toggle-row" id="nudgeToggleRow">
+          <div class="mem-toggle-text"><b id="nudgeToggleTitle">پیام‌های دوستانه: روشن</b><span id="nudgeToggleHint">روشن: اگه مدتی نیای، Suvreno ممکنه خودش بهت پیام بده.</span></div>
+          <button type="button" id="nudgeToggleBtn" class="mem-switch on" role="switch" aria-checked="true" aria-label="خاموش/روشن پیام‌های دوستانه"><span class="mem-switch-knob"></span></button>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <div class="id-box-label">قابلیت‌ها</div>
+        <button class="clear-memory" id="settingsCapsBtn" type="button">📱 قابلیت‌های Suvreno و دسترسی به گوشی</button>
+      </div>
+
+      <div class="settings-section">
+        <div class="id-box-label" data-i18n="settings.privacy">حریم‌خصوصی</div>
+        <button class="clear-memory" id="settingsMemoryBtn" type="button" data-i18n="settings.manageMemory">🧠 مدیریت حافظه</button>
+        <button class="clear-memory" id="settingsPersonalityBtn" type="button" data-i18n="settings.personality">🎭 شخصیت Suvreno</button>
+        <button class="clear-memory" id="settingsPrivacyBtn" type="button" data-i18n="settings.rulesPrivacy">📄 قوانین و حریم خصوصی</button>
+        <button class="clear-memory danger-text" id="settingsClearHistoryBtn" type="button" data-i18n="settings.clearAllChats">🗑 حذف همه‌ی گفتگوها</button>
+      </div>
+
+      <div class="settings-section">
+        <div class="id-box-label" data-i18n="settings.about">درباره</div>
+        <p class="modal-subtitle">Suvreno<br>سازنده: ابوالفضل محسن‌پور</p>
+        <nav class="legal-links settings-legal" aria-label="اطلاعات و قوانین"><a href="pricing.html" target="_blank" rel="noopener">تعرفه‌ها</a><a href="about.html" target="_blank" rel="noopener">درباره ما</a><a href="terms.html" target="_blank" rel="noopener">قوانین و مقررات</a><a href="privacy.html" target="_blank" rel="noopener">حریم خصوصی</a><a href="refund.html" target="_blank" rel="noopener">بازگشت وجه</a><a href="contact.html" target="_blank" rel="noopener">تماس با ما</a></nav>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="capsModal">
+    <div class="modal-card settings-modal-card caps-card">
+      <button class="modal-close" id="closeCapsModal" type="button">×</button>
+      <h2>📱 قابلیت‌های Suvreno</h2>
+
+      <div class="settings-section caps-phone-box">
+        <div class="id-box-label">🔐 دسترسی به ابزارهای گوشی</div>
+        <p class="modal-subtitle" id="capsNativeNote" style="margin:4px 0 8px"></p>
+        <div id="capsPermList"></div>
+        <button class="clear-memory" id="capsEnableBtn" type="button">✅ فعال‌سازی دسترسی‌ها</button>
+        <button class="clear-memory" id="capsAppSettingsBtn" type="button" style="display:none">⚙️ باز کردن تنظیمات اپ (اگر پنجره‌ی اجازه نیامد)</button>
+        <p class="modal-subtitle caps-small">دستورها فقط از چیزی اجرا می‌شوند که خودت می‌نویسی یا می‌گویی. هر دستور بعد از اجرا نتیجه‌اش (انجام شد / نشد) را در چت می‌گوید.</p>
+      </div>
+
+      <div class="settings-section caps-list">
+        <div class="id-box-label">📞 کنترل گوشی (در اپ اندروید)</div>
+        <ul>
+          <li><b>تماس:</b> «به مامانم زنگ بزن» — اسم را خودکار از مخاطبین پیدا می‌کند.</li>
+          <li><b>پیامک:</b> «برای علی پیام بده فردا میام» — مستقیم ارسال می‌شود و نتیجه را می‌گوید.</li>
+          <li><b>واتساپ:</b> پیام آماده می‌شود و فقط دکمه‌ی ارسال را می‌زنی.</li>
+          <li><b>آلارم و تایمر:</b> «ساعت ۷ بیدارم کن»، «تایمر ۱۰ دقیقه».</li>
+          <li><b>یادآور و تقویم:</b> «فردا ساعت ۵ یادم بنداز»، «جلسه بذار».</li>
+          <li><b>باز کردن برنامه‌ها:</b> «اینستاگرام را باز کن»؛ اگر نصب نبود، گوگل‌پلی باز می‌شود.</li>
+          <li><b>چراغ قوه، تنظیمات و نقشه:</b> «چراغ قوه را روشن کن»، «مسیر برو به …».</li>
+        </ul>
+
+        <div class="id-box-label">💬 گفتگو و دانش</div>
+
+      <div class="settings-section caps-list">
+        <div class="id-box-label">🤖 ایجنت (گوشی و کامپیوتر)</div>
+        <ul>
+          <li><b>کار چندمرحله‌ای:</b> «برو توی دیجی‌کالا یک کت و شلوار مشکی مردانه به سبد خرید اضافه کن» — خودش سایت را باز می‌کند، جست‌وجو و انتخاب می‌کند.</li>
+          <li><b>همین‌جا در چت بگو:</b> Suvreno خودش می‌فهمد کار ایجنت است یا کار ابزار آماده‌ی گوشی (مثل آلارم). اگر مطمئن نباشد، چند گزینه نشانت می‌دهد.</li>
+          <li><b>کامپیوتر و گوشی:</b> روی کامپیوتر با افزونه‌ی Chrome، روی گوشی داخل اپ اندروید (نسخه‌ی سایت). راه‌اندازی: «تنظیمات ← ایجنت».</li>
+          <li><b>امن:</b> قبل از خرید، پرداخت، ارسال، انتشار و حذف از تو تأیید می‌گیرد؛ رمزها را نمی‌خواند و پرداخت نهایی با خودته.</li>
+        </ul>
+      </div>
+        <ul>
+          <li>گفتگوی هوشمند فارسی و انگلیسی، با حافظه‌ی شخصی و شخصیت‌های مختلف.</li>
+          <li>جست‌وجوی وب برای اطلاعات به‌روز و خواندن لینک‌ها.</li>
+          <li>تحلیل فایل و سند (PDF، Word، Excel، CSV، متن).</li>
+        </ul>
+
+        <div class="id-box-label">🎨 تصویر</div>
+        <ul>
+          <li>ساخت تصویر از روی توضیح متنی.</li>
+          <li>ویرایش تصویر (غروب، برفی، سیاه‌وسفید، تغییر پس‌زمینه و …).</li>
+          <li>تحلیل عکس و خواندن متن داخل تصویر، و گالری تصویرها.</li>
+        </ul>
+
+        <div class="id-box-label">🎙️ صدا</div>
+        <ul>
+          <li>ورودی صوتی و خواندن پاسخ‌ها با صدای بلند.</li>
+          <li>«دفترچه‌ی صوتی»: مکالمه‌ی کاملاً صوتی؛ دستورهای گوشی را هم می‌توانی بگویی.</li>
+        </ul>
+
+        <div class="id-box-label">🗂️ سازماندهی و اشتراک</div>
+        <ul>
+          <li>پوشه‌بندی و برچسب‌گذاری گفتگوها، و تاریخچه‌ی گفتگو.</li>
+          <li>اشتراک Start و Plus و هدیه‌ی کد معرف.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== PRIVACY POLICY MODAL — الزامی برای انتشار در Google Play / App Store ===== -->
+  <div class="modal" id="privacyPolicyModal">
+    <div class="modal-card">
+      <button class="modal-close" id="closePrivacyPolicyModal" type="button">×</button>
+      <div class="modal-icon">🔒</div>
+      <h2 data-i18n="privacy.title">حریم خصوصی و قوانین استفاده</h2>
+      <p class="modal-subtitle" style="text-align:right; line-height:2;">
+        برای ارائه‌ی خدمات Suvreno (ورود با ایمیل یا گوگل، ذخیره‌ی گفتگو و حافظه‌ی شخصی)، ایمیل و آدرس IP شما هنگام ثبت‌نام ذخیره می‌شود و فقط برای امنیت حساب، جلوگیری از سوءاستفاده و اعمال سقف‌های استفاده به کار می‌رود. برای پاسخ‌دادن به درخواست‌هایتان، متن پیام، عکس، فایل یا صدای ارسالی ممکن است برای همان درخواست به سرویس‌دهندگان فنی و هوش مصنوعی شریک فرستاده شود؛ لطفاً اطلاعات بسیار حساس (رمز، شماره‌ی کارت، مدارک هویتی) را در گفتگو وارد نکنید. اطلاعات شما فروخته نمی‌شود و برای تبلیغات استفاده نمی‌شود. گفتگوها و تصاویر فقط برای خودتان قابل‌مشاهده‌ست. می‌توانید هر زمان حساب را از «تنظیمات ← حساب من» حذف کنید؛ اگر اشتراک Start یا Plus فعال داشته باشید لغو نمی‌شود و با ورود دوباره سر جایش است. برای جلوگیری از سوءاستفاده، بعد از ۴ بار حذف حساب پشت‌سرهم، ورود با آن حساب تا ۳۰ روز مسدود می‌شود. با ادامه‌ی استفاده از Suvreno، با این سیاست موافقت می‌کنید.
+      </p>
+      <p class="modal-subtitle modal-links" style="text-align:right">متن کامل: <a href="privacy.html" target="_blank" rel="noopener">حریم خصوصی</a> · <a href="terms.html" target="_blank" rel="noopener">قوانین و مقررات</a> · <a href="refund.html" target="_blank" rel="noopener">بازگشت وجه</a> · <a href="pricing.html" target="_blank" rel="noopener">تعرفه‌ها</a></p>
+      <button class="clear-memory" id="acceptPrivacyPolicyBtn" type="button" data-i18n="privacy.accept">متوجه شدم و قبول دارم ✅</button>
+    </div>
+  </div>
+
+  <!-- ===== مودال مهمان: سقف ۱۰ پیام یا قابلیت قفل‌شده ===== -->
+  <div class="modal" id="guestLoginModal">
+    <div class="modal-card">
+      <button class="modal-close" type="button" data-guest-close aria-label="بستن">×</button>
+      <div class="modal-icon">🔑</div>
+      <h2>ورود به Suvreno</h2>
+      <p class="modal-subtitle" style="text-align:right;line-height:2">برای ادامه‌ی گفتگو، ذخیره‌ی تاریخچه و استفاده از قابلیت‌های تصویر، صدا و تحلیل فایل، رایگان وارد حسابت شو.</p>
+      <button class="generate-btn" type="button" data-guest-login>ورود / ثبت‌نام رایگان</button>
+      <button class="clear-memory" type="button" data-guest-close>بعداً</button>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+</div>
+
+<script>
+  (function(){var row=document.getElementById("fontSizeRow");if(!row)return;
+  function mark(){var k="m";try{k=localStorage.getItem("SUV_FS")||"m"}catch(e){}
+    row.querySelectorAll("[data-fs-choice]").forEach(function(b){b.classList.toggle("active",b.getAttribute("data-fs-choice")===k)})}
+  row.addEventListener("click",function(e){var b=e.target.closest("[data-fs-choice]");if(!b)return;
+    try{localStorage.setItem("SUV_FS",b.getAttribute("data-fs-choice"))}catch(x){}
+    if(window.__suvApplyFs)window.__suvApplyFs();mark()});mark();})();
+</script>
+
+<script src="logo-data.js?v=5"></script>
+<script src="script.js?v=42"></script>
+<script src="plus.js?v=22"></script>
+<script src="theme.js?v=3"></script>
+<script src="theme-color.js?v=4"></script>
+<script src="games.js?v=3"></script>
+<script src="council.js?v=2"></script>
+<script src="tickets.js?v=3"></script>
+<script src="app-promo.js?v=3" defer></script>
+<script src="vn-orb.js?v=4" defer></script>
+
+<script>
+  /* ===========================================================
+     خودآزمای بارگذاری — اگه script.js به هر دلیلی (کش قدیمی،
+     آپلود ناقص، خطای شبکه) اجرا نشه، این هشدار رو مستقیم روی
+     صفحه نشون می‌ده. این اسکریپت کوچیک و مستقل هیچ وابستگی‌ای
+     به فایل‌های دیگه نداره، پس همیشه خودش کار می‌کنه و به‌وضوح
+     نشون می‌ده مشکل از «لود‌نشدن فایل» بوده یا از جای دیگه.
+  =========================================================== */
+  setTimeout(function () {
+    if (window.AM_AI_LOADED) return;
+    var bar = document.createElement("div");
+    bar.style.cssText =
+      "position:fixed;top:0;left:0;right:0;z-index:999999;" +
+      "background:#3a0d12;color:#ffd9d9;padding:14px 16px;" +
+      "font-family:Tahoma,Arial,sans-serif;font-size:13px;line-height:1.9;" +
+      "direction:rtl;text-align:right;border-bottom:2px solid #ff5555;";
+    bar.innerHTML =
+      "⚠️ فایل script.js لود یا اجرا نشد — دکمه‌ها کار نمی‌کنن.<br>" +
+      "۱) این صفحه رو یه‌بار hard-refresh کن (Ctrl+Shift+R یا حالت ناشناس).<br>" +
+      "۲) مطمئن شو فایل‌های index.html و script.js?v=42 و logo-data.js?v=5 و style.css?v=26 همه دقیقاً آپلود شدن.<br>" +
+      "۳) آدرس همین سایت را با ‎/script.js?v=42 در انتها باز کن — باید کد جاوااسکریپت رو ببینی، نه یه صفحه‌ی خالی یا JSON.";
+    document.body.prepend(bar);
+  }, 3500);
+</script>
+
+</body>
+</html>

@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Suvreno</title>
+<style>
+  html,body{margin:0;height:100%;background:#070b16;color:#e9edf7;font-family:Tahoma,Arial,sans-serif}
+  .box{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:24px}
+  .dot{width:38px;height:38px;border-radius:50%;border:4px solid rgba(255,255,255,.15);border-top-color:#7b4dff;animation:s 0.9s linear infinite}
+  @keyframes s{to{transform:rotate(360deg)}}
+  a{color:#8fb4ff}
+</style>
+</head>
+<body>
+<div class="box">
+  <div class="dot"></div>
+  <div>در حال ورود به Suvreno ...</div>
+  <div id="manual" style="display:none"><a id="lnk" href="#">اگر صفحه عوض نشد، اینجا را بزن</a></div>
+</div>
+<script>
+  // این صفحه فقط پارامترهای برگشتی گوگل (code و state) را به سرور Suvreno می‌دهد.
+  // اگر آدرس ورکر عوض شد، فقط همین یک خط را عوض کن:
+  var WORKER = "https://suvreno.sydabolfazlmohsenpour.workers.dev";
+  var target = WORKER + "/auth/google/callback" + (location.search || "");
+  document.getElementById("lnk").href = target;
+  setTimeout(function(){ document.getElementById("manual").style.display = "block"; }, 4000);
+  location.replace(target);
+</script>
+</body>
+</html>
