@@ -706,15 +706,15 @@
       document.head.appendChild(st);
     }
     const JB_ST = { scheduled: ["در انتظار", "Waiting", ""], running: ["در حال اجرا", "Running", ""], done: ["انجام شد", "Done", "ok"], failed: ["ناموفق", "Failed", "bad"], device_wait: ["منتظر اجرا روی دستگاه تو", "Waiting for your device", "bad"], claimed: ["در حال شروع روی دستگاه", "Starting on device", ""] };
-    const JB_KIND = { article: ["مقاله", "Article"], research: ["گزارش", "Report"], monitor: ["بررسی صفحه", "Page check"], needs_login: ["نیازمند ورود (روی دستگاه)", "Needs login (on device)"] };
+    const JB_KIND = { article: ["مقاله", "Article"], research: ["گزارش", "Report"], monitor: ["بررسی صفحه", "Page check"], needs_login: ["نیازمند ورود (روی دستگاه)", "Needs login (on device)"], api_check: ["خواندن پنل با API", "Panel via API"] };
     function openJobsSheet(startTab) {
       jobCss(); agCss();
       let sh = document.getElementById("jbSheet");
       if (!sh) {
         sh = document.createElement("div"); sh.id = "jbSheet"; sh.className = "ag-ov"; sh.style.display = "none";
         sh.innerHTML = `<div class="ag-box" dir="${isEn() ? "ltr" : "rtl"}"><button type="button" class="ag-x" aria-label="close">×</button><h3>⏰ ${t("کارهای زمان‌بندی‌شده", "Scheduled tasks")}</h3>
-          <div class="pp-mut">${t("یک کار با زمان مشخص بده (مثلاً «امشب ساعت ۱۰ از این منابع یک گزارش بساز»). Suvreno سر وقت خودش انجام می‌دهد و نتیجه را اینجا می‌گذارد؛ لازم نیست آنلاین باشی. نتیجه به اپ، چت و (اگر ایمیلت تأیید شده باشد) ایمیلت می‌رسد. اگر سایت وردپرسی‌ات را در تب «سایت من» وصل کنی، می‌توانی انتخاب کنی مستقیم منتشر شود یا اول خودت ببینی.", "Give a task with a time. Suvreno runs it on schedule and leaves the result here; you don't need to be online. Results go to the app, chat and (if your email is verified) email. Connect your WordPress site in the My site tab to publish directly or review first.")}</div>
-          <div class="jb-tabs"><button type="button" data-tab="jobs">${t("کارها", "Tasks")}</button><button type="button" data-tab="res">${t("نتیجه‌ها", "Results")}<span id="jbUnread"></span></button><button type="button" data-tab="me">${t("شناخت من", "About me")}</button><button type="button" data-tab="site">${t("سایت من", "My site")}</button></div>
+          <div class="pp-mut">${t("یک کار با زمان مشخص بده (مثلاً «امشب ساعت ۱۰ از این منابع یک گزارش بساز»). Suvreno سر وقت خودش انجام می‌دهد و نتیجه را اینجا می‌گذارد؛ لازم نیست آنلاین باشی. نتیجه به اپ، چت و (اگر ایمیلت تأیید شده باشد) ایمیلت می‌رسد. اگر سایت وردپرسی‌ات را در تب «سایت من» وصل کنی، می‌توانی انتخاب کنی مستقیم منتشر شود یا اول خودت ببینی. اگر پنل‌ات API دارد، در تب «API پنل‌ها» فقط‌خواندنی وصلش کن تا سر ساعت (حتی وقتی دستگاهت خاموش است) چک شود.", "Give a task with a time. Suvreno runs it on schedule and leaves the result here; you don't need to be online. Results go to the app, chat and (if your email is verified) email. Connect your WordPress site in the My site tab to publish directly or review first. To check a panel that has an API, connect it (read-only) in the Panel APIs tab.")}</div>
+          <div class="jb-tabs"><button type="button" data-tab="jobs">${t("کارها", "Tasks")}</button><button type="button" data-tab="res">${t("نتیجه‌ها", "Results")}<span id="jbUnread"></span></button><button type="button" data-tab="me">${t("شناخت من", "About me")}</button><button type="button" data-tab="api">${t("API پنل‌ها", "Panel APIs")}</button><button type="button" data-tab="site">${t("سایت من", "My site")}</button></div>
           <div id="jbBody"></div></div>`;
         sh.addEventListener("click", (e) => {
           if (e.target === sh || (e.target.classList && e.target.classList.contains("ag-x"))) { sh.style.display = "none"; return; }
@@ -725,7 +725,7 @@
       }
       sh.style.display = "flex"; jbTab(startTab || "jobs");
     }
-    const jbState = { tab: "jobs", list: null, prop: null, view: null };
+    const jbState = { tab: "jobs", list: null, prop: null, view: null, apiList: null, apiEdit: null };
     function jbMsg(text, kind) { const m = document.getElementById("jbMsg"); if (m) { m.className = "jb-msg " + (kind || ""); m.textContent = text || ""; } }
     function jbSetTabs() { document.querySelectorAll("#jbSheet .jb-tabs button").forEach((b) => b.classList.toggle("on", b.getAttribute("data-tab") === jbState.tab)); const u = document.getElementById("jbUnread"); if (u) u.textContent = jbState.list && jbState.list.unread ? " (" + num(jbState.list.unread) + ")" : ""; }
     async function jbTab(tab) {
@@ -734,7 +734,8 @@
       if (!findToken()) { body.innerHTML = `<div class="jb-msg bad">${t("اول وارد حساب Suvreno شو.", "Please sign in first.")}</div>`; return; }
       body.innerHTML = `<div class="jb-msg">${t("در حال بارگذاری…", "Loading…")}</div>`;
       try {
-        if (tab === "site") { const r = await plusCall({ mode: "plus-site-get" }); if (!r || !r.ok) throw new Error(r && r.message); jbRenderSite(r); return; }
+        if (tab === "api") { const r = await plusCall({ mode: "plus-api-list" }); if (!r || !r.ok) throw new Error(r && r.message); jbState.apiList = r; jbRenderApi(r); return; }
+        if (tab === "site") { const r = await plusCall({ mode: "plus-site-get" }); if (!r || !r.ok) throw new Error(r && r.message); jbState.siteType = ""; jbRenderSite(r); return; }
         if (tab === "me") { const r = await plusCall({ mode: "plus-profile-get" }); if (!r || !r.ok) throw new Error(r && r.message); jbRenderMe(r.profile || {}); return; }
         const r = await plusCall({ mode: "plus-job-list" }); if (!r || !r.ok) throw new Error(r && r.message);
         jbState.list = r; jbSetTabs();
@@ -784,14 +785,18 @@
         <div class="jb-row"><div><label class="jb-lb">${t("تاریخ (به وقت تهران)", "Date (Tehran time)")}</label><input class="jb-f" id="jbDate" dir="ltr" type="date" value="${esc(p.date || "")}"></div><div><label class="jb-lb">${t("ساعت", "Time")}</label><input class="jb-f" id="jbTime" dir="ltr" type="time" value="${esc(p.time || "")}"></div></div>
         <label class="jb-lb">${t("تکرار", "Repeat")}</label><select class="jb-f" id="jbRep"><option value="">${t("فقط یک بار", "Once")}</option><option value="daily"${p.repeat === "daily" ? " selected" : ""}>${t("هر روز (پلن پولی)", "Daily (paid)")}</option><option value="weekly"${p.repeat === "weekly" ? " selected" : ""}>${t("هر هفته (پلن پولی)", "Weekly (paid)")}</option></select>
         <label class="jb-lb">${t("آدرس منبع‌ها (هر خط یک آدرس https؛ اختیاری، تا " + num((L.limits || {}).urls || 3) + " تا)", "Source URLs (one https URL per line, optional, up to " + ((L.limits || {}).urls || 3) + ")")}</label><textarea class="jb-f" id="jbUrls" dir="ltr" style="min-height:56px" placeholder="https://…">${esc((p.urls || []).join("\n"))}</textarea>
-        <div class="ag-mut">${t("اگر آدرسی ندهی و جست‌وجوی وب سرور فعال باشد، خودش منبع پیدا می‌کند. کارهایی که نیاز به ورود به پنل یا حساب شخصی دارند هنوز پشتیبانی نمی‌شوند.", "If you give no URLs, web search is used when enabled. Tasks that need signing in to a panel/account are not supported yet.")}</div>
+        <div class="ag-mut">${t("اگر آدرسی ندهی و جست‌وجوی وب سرور فعال باشد، خودش منبع پیدا می‌کند. کارهای نیازمند ورود به پنل: یا پنل را با API وصل کن و پایین انتخاب کن، یا بدون آن روی دستگاه خودت (افزونه‌ی Chrome/اپ) اجرا می‌شوند.", "If you give no URLs, web search is used when enabled. Tasks that need a panel login either use a connected panel API (select it below) or run on your own device.")}</div>
+        ${(L.apiLinks || []).length ? `<label class="jb-lb">${t("خواندن از API پنل (فقط‌خواندنی، ابری)", "Read from a panel API (read-only, cloud)")}</label><select class="jb-f" id="jbApi"><option value="">${t("نه، از منابع وب/جست‌وجو", "No, use web sources")}</option>${(L.apiLinks || []).map((a) => `<option value="${esc(a.id)}" data-paths="${esc((a.paths || []).join(" | "))}">${esc(a.name)}</option>`).join("")}</select>
+        <textarea class="jb-f" id="jbApiPaths" dir="ltr" style="min-height:48px" placeholder="${esc(t("مسیرهای API (اختیاری؛ هر خط یکی؛ خالی = همه‌ی مسیرهای مجاز)", "API paths (optional, one per line; empty = all allowed paths)"))}"></textarea><div class="ag-mut" id="jbApiHint"></div>` : `<div class="ag-mut">${t("پنلت API دارد؟ در تب «API پنل‌ها» وصلش کن تا سر ساعت بدون نیاز به روشن بودن دستگاهت خوانده شود.", "Does your panel have an API? Connect it in the Panel APIs tab so it is read on schedule without your device.")}</div>`}
         <label class="jb-lb">${t("انتشار در سایت من", "Publish to my site")}</label><select class="jb-f" id="jbPub"><option value="">${t("فقط برای خودم بفرست (منتشر نشود)", "Just send it to me (no publishing)")}</option><option value="ask"${p.publish === true ? " selected" : ""}>${t("پیش‌نویس بساز؛ خودم تصمیم می‌گیرم منتشر شود", "Make a draft; I decide whether to publish")}</option><option value="auto">${t("خودت مستقیم در سایتم منتشر کن", "Publish directly to my site")}</option></select>
         <div class="ag-mut">${t("انتشار فقط با سایت وصل‌شده (تب «سایت من») ممکن است. اگر «مستقیم» را انتخاب کنی، Suvreno بعد از ساخت متن خودش و بدون پرسیدن دوباره در سایتت منتشرش می‌کند.", "Publishing needs a connected site (\"My site\" tab). If you choose direct, Suvreno publishes it by itself right after writing, without asking again.")}</div>
         <label class="jb-lb" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="jbMail" checked> ${t("نتیجه به ایمیلم هم فرستاده شود (فقط اگر ایمیلت تأیید شده)", "Also email me the result (only if your email is verified)")}</label>
         <button type="button" class="jb-b" data-jb="create">${t("ثبت کار", "Schedule")}</button>
-        <div id="jbMsg" class="jb-msg">${p.needsDevice ? t("این کار به‌نظر نیاز به ورود به پنل/حساب دارد و فعلاً ثبت نمی‌شود.", "This looks like it needs signing in; it can't be scheduled yet.") : ""}</div>
+        <div id="jbMsg" class="jb-msg">${p.needsDevice ? t("این کار به‌نظر نیاز به ورود به پنل/حساب دارد: اگر پنلت API دارد پایین انتخابش کن؛ وگرنه سر ساعت روی دستگاه خودت (افزونه/اپ) اجرا می‌شود.", "This looks like it needs a login: pick a panel API below if you have one; otherwise it runs on your own device.") : ""}</div>
         <div class="ag-mut" style="margin-top:12px">${t("سطح تو: ", "Your plan: ")}<b style="display:inline">${esc(L.tierLabel || "")}</b> · ${t("ثبت کار " + per + ": " + num(q.made || 0) + " از " + num(q.createCap || 0) + " · کار فعال: " + num(q.active || 0) + " از " + num(q.activeCap || 0), "Created " + per + ": " + (q.made || 0) + "/" + (q.createCap || 0) + " · active: " + (q.active || 0) + "/" + (q.activeCap || 0))}${L.nowText ? "<br>" + t("ساعت الان (تهران): ", "Now (Tehran): ") + esc(L.nowText) : ""}</div>
         ${rows}`;
+      const sel = document.getElementById("jbApi");
+      if (sel) { const sync = () => { const o = sel.options[sel.selectedIndex], h = document.getElementById("jbApiHint"); if (h) h.textContent = o && o.value ? t("مسیرهای مجاز: ", "Allowed paths: ") + (o.getAttribute("data-paths") || "") : ""; }; sel.addEventListener("change", sync); sync(); }
     }
     function jbRenderRes() {
       const L = jbState.list || {}, body = document.getElementById("jbBody"), v = jbState.view;
@@ -805,20 +810,62 @@
     function jbPubBox(v) {
       if (!v || v.status !== "ok") return "";
       if (v.publish_state === "published") return `<div class="jb-it"><b>${t("منتشر شد ✅", "Published ✅")}</b>${v.publish_url ? `<a href="${esc(v.publish_url)}" target="_blank" rel="noopener">${esc(v.publish_url)}</a>` : ""}</div>`;
-      if (!(jbState.list && jbState.list.siteLinked)) return `<div class="ag-mut" style="margin-top:10px">${t("برای انتشار در سایتت، اول در تب «سایت من» وردپرس را وصل کن.", "To publish, connect WordPress in the \"My site\" tab.")}</div>`;
-      return `<div class="ag-actions"><button type="button" class="jb-b" data-jb="pub" data-st="publish" data-id="${esc(v.id)}">${t("انتشار در سایت", "Publish to site")}</button><button type="button" class="jb-b sec" data-jb="pub" data-st="draft" data-id="${esc(v.id)}">${t("ذخیره‌ی پیش‌نویس در سایت", "Save draft on site")}</button></div>${v.publish_state === "draft" && v.publish_url ? `<div class="ag-mut">${t("پیش‌نویس در سایت هست: ", "Draft on site: ")}${esc(v.publish_url)}</div>` : ""}`;
+      if (!(jbState.list && jbState.list.siteLinked)) return `<div class="ag-mut" style="margin-top:10px">${t("برای انتشار خودکار، اول در تب «سایت من» مقصد انتشار (وردپرس، Ghost، وبهوک یا کانال تلگرام) را وصل کن؛ یا متن را کپی کن و خودت منتشر کن.", "To publish automatically, connect a destination (WordPress, Ghost, webhook or Telegram channel) in the \"My site\" tab, or copy the text and publish it yourself.")}</div>`;
+      const tg = (jbState.list.siteType || "") === "telegram";
+      return `<div class="ag-actions"><button type="button" class="jb-b" data-jb="pub" data-st="publish" data-id="${esc(v.id)}">${tg ? t("ارسال به کانال تلگرام", "Send to Telegram channel") : t("انتشار در سایت", "Publish to site")}</button>${tg ? "" : `<button type="button" class="jb-b sec" data-jb="pub" data-st="draft" data-id="${esc(v.id)}">${t("ذخیره‌ی پیش‌نویس در سایت", "Save draft on site")}</button>`}</div>${v.publish_state === "draft" && v.publish_url ? `<div class="ag-mut">${t("پیش‌نویس در سایت هست: ", "Draft on site: ")}${esc(v.publish_url)}</div>` : ""}`;
+    }
+    function jbRenderApi(r) {
+      const b = document.getElementById("jbBody"), ed = jbState.apiEdit, links = r.links || [], lim = r.limits || {};
+      const AT = { bearer: ["Bearer (توکن)", "Bearer token"], header: ["هدر دلخواه (مثل X-API-Key)", "Custom header (e.g. X-API-Key)"], basic: ["نام کاربری و رمز (Basic)", "Username & password (Basic)"] };
+      const cards = links.map((a) => `<div class="jb-it"><b>${esc(a.name)}<span class="jb-bd ok">${t("وصل است", "Connected")}</span></b><div class="ag-mut" dir="ltr" style="text-align:left">${esc(a.base_url)}<br>${esc((a.paths || []).join("  ·  "))}</div><div class="ag-mut">${t("آخرین بررسی: ", "Last checked: ")}${esc(a.verifiedText || "")}</div><div class="ag-actions"><button type="button" class="jb-b sec" data-jb="atest" data-id="${esc(a.id)}">${t("تست اتصال", "Test")}</button><button type="button" class="jb-b sec" data-jb="aedit" data-id="${esc(a.id)}">${t("ویرایش", "Edit")}</button><button type="button" class="jb-b sec" data-jb="adel" data-id="${esc(a.id)}">${t("حذف", "Delete")}</button></div></div>`).join("");
+      const canAdd = ed || links.length < (lim.links || 1);
+      const form = canAdd ? `<label class="jb-lb">${t("نام اتصال", "Connection name")}</label><input class="jb-f" id="jbApiName" maxlength="40" placeholder="${esc(t("مثلاً پنل فروشگاه", "e.g. Shop panel"))}" value="${esc(ed ? ed.name : "")}">
+        <label class="jb-lb">${t("آدرس پایه‌ی API", "API base URL")}</label><input class="jb-f" id="jbApiUrl" dir="ltr" placeholder="https://panel.example.com" value="${esc(ed ? ed.base_url : "")}">
+        <label class="jb-lb">${t("روش احراز هویت", "Authentication")}</label><select class="jb-f" id="jbApiAuth">${Object.keys(AT).map((k) => `<option value="${k}"${ed && ed.auth_type === k ? " selected" : ""}>${t(AT[k][0], AT[k][1])}</option>`).join("")}</select>
+        <div id="jbApiHdrBox"><label class="jb-lb">${t("نام هدر", "Header name")}</label><input class="jb-f" id="jbApiHdr" dir="ltr" placeholder="X-API-Key" value="${esc(ed ? ed.header_name : "")}"></div>
+        <div id="jbApiUserBox"><label class="jb-lb">${t("نام کاربری", "Username")}</label><input class="jb-f" id="jbApiUser" dir="ltr" autocomplete="off" value="${esc(ed ? ed.username : "")}"></div>
+        <label class="jb-lb">${t("کلید / توکن / رمز API", "API key / token / password")}</label><input class="jb-f" id="jbApiSecret" dir="ltr" type="password" autocomplete="new-password" placeholder="${esc(ed ? t("برای نگه‌داشتن کلید قبلی خالی بگذار", "Leave empty to keep the current key") : "")}">
+        <label class="jb-lb">${t("مسیرهای مجاز (هر خط یکی، فقط خواندن)", "Allowed paths (one per line, read-only)")}</label><textarea class="jb-f" id="jbApiPathsDef" dir="ltr" style="min-height:70px" placeholder="/api/stats&#10;/api/orders?status=new">${esc(ed ? (ed.paths || []).join("\n") : "")}</textarea>
+        <div class="ag-actions"><button type="button" class="jb-b" data-jb="asave"${ed ? ` data-id="${esc(ed.id)}"` : ""}>${t(ed ? "ذخیره و تست" : "اتصال و تست", ed ? "Save & test" : "Connect & test")}</button>${ed ? `<button type="button" class="jb-b sec" data-jb="anew">${t("انصراف", "Cancel")}</button>` : ""}</div>` : `<div class="ag-mut">${t("به سقف اتصال‌های این سطح (" + num(lim.links || 1) + ") رسیده‌ای؛ یکی را حذف کن یا پلن بالاتر بگیر.", "You reached the connection limit for your plan (" + (lim.links || 1) + ").")}</div>`;
+      b.innerHTML = `<div class="ag-mut">${t("اگر پنل یا سایتت API دارد، Suvreno می‌تواند سر ساعتی که تعیین می‌کنی (حتی وقتی دستگاهت خاموش است) داده‌اش را بخواند، خلاصه کند و به تو بدهد. فقط درخواست خواندن (GET) و فقط از مسیرهایی که خودت اینجا می‌نویسی ارسال می‌شود؛ چیزی تغییر یا حذف نمی‌شود. برای امنیت، کلیدی بساز که فقط دسترسی «خواندن» داشته باشد، نه مدیر کل. کلید رمزنگاری می‌شود و هر وقت خواستی حذفش کن. ایمیل، شماره‌ی تلفن، کارت و فیلدهای شبیه رمز/توکن پیش از رسیدن به مدل پنهان می‌شوند.", "If your panel or site has an API, Suvreno can read it on schedule (even when your device is off), summarize it and send it to you. Only read requests (GET) to the paths you list are sent; nothing is changed or deleted. Create a read-only key, not a full admin key. The key is stored encrypted; delete it any time. Emails, phone numbers, cards and secret-like fields are masked before reaching the model.")}</div>
+        ${r.ready ? "" : `<div class="jb-msg bad">${t("این بخش هنوز روی سرور راه‌اندازی نشده؛ به پشتیبانی خبر بده.", "This is not set up on the server yet.")}</div>`}
+        ${cards}${form}<div id="jbMsg" class="jb-msg"></div><div id="jbApiOut" class="ag-mut" dir="ltr" style="text-align:left;white-space:pre-wrap"></div>`;
+      const sel = document.getElementById("jbApiAuth");
+      if (sel) { const sync = () => { const v = sel.value, h = document.getElementById("jbApiHdrBox"), u = document.getElementById("jbApiUserBox"); if (h) h.style.display = v === "header" ? "" : "none"; if (u) u.style.display = v === "basic" ? "" : "none"; }; sel.addEventListener("change", sync); sync(); }
     }
     function jbRenderSite(r) {
+      jbState.siteR = r;
       const s0 = r.site, b = document.getElementById("jbBody");
-      const form = `<label class="jb-lb">${t("آدرس سایت وردپرس", "WordPress site URL")}</label><input class="jb-f" id="jbSiteUrl" dir="ltr" placeholder="https://example.com" value="${esc(s0 ? s0.base_url : "")}">
-        <label class="jb-lb">${t("نام کاربری وردپرس", "WordPress username")}</label><input class="jb-f" id="jbSiteUser" dir="ltr" autocomplete="off" value="${esc(s0 ? s0.username : "")}">
-        <label class="jb-lb">${t("رمز برنامه (Application Password)", "Application Password")}</label><input class="jb-f" id="jbSitePass" dir="ltr" type="password" autocomplete="new-password" placeholder="xxxx xxxx xxxx xxxx xxxx xxxx">
-        <div class="ag-actions"><button type="button" class="jb-b" data-jb="ssave">${t(s0 ? "به‌روزرسانی اتصال" : "اتصال", s0 ? "Update" : "Connect")}</button>${s0 ? `<button type="button" class="jb-b sec" data-jb="sclear">${t("قطع اتصال", "Disconnect")}</button>` : ""}</div>`;
-      b.innerHTML = `<div class="ag-mut">${t("Suvreno فقط با «رمز برنامه»‌ی وردپرس مطلب می‌سازد؛ رمز اصلی حسابت را هرگز اینجا نگذار. رمز برنامه رمزنگاری و فقط برای انتشار مطلب‌هایی که خودت سفارش دادی استفاده می‌شود و هر وقت خواستی قطعش می‌کنی.", "Suvreno only uses a WordPress Application Password, never your main password. It is stored encrypted and used only to post content you asked for.")}</div>
+      const TY = { wordpress: ["وردپرس", "WordPress"], ghost: ["Ghost", "Ghost"], webhook: ["وبهوک / API عمومی (هر سایت)", "Webhook / generic API"], telegram: ["کانال تلگرام", "Telegram channel"], none: ["فقط تحویل متن (کپی دستی)", "Text only (copy manually)"] };
+      const ty = jbState.siteType || (s0 ? s0.type : "") || "wordpress", same = !!s0 && s0.type === ty;
+      const lb = (fa, en) => `<label class="jb-lb">${t(fa, en)}</label>`;
+      const inp = (id, ph, val, pw) => `<input class="jb-f" id="${id}" dir="ltr" ${pw ? 'type="password" autocomplete="new-password"' : 'autocomplete="off"'} placeholder="${esc(ph || "")}" value="${esc(val || "")}">`;
+      let fields = "", help = "";
+      if (ty === "wordpress") {
+        fields = lb("آدرس سایت وردپرس", "WordPress site URL") + inp("jbSiteUrl", "https://example.com", same ? s0.base_url : "") + lb("نام کاربری وردپرس", "WordPress username") + inp("jbSiteUser", "", same ? s0.username : "") + lb("رمز برنامه (Application Password)", "Application Password") + inp("jbSitePass", "xxxx xxxx xxxx xxxx xxxx xxxx", "", true);
+        help = t("وردپرس ← کاربران ← پروفایل ← پایین صفحه «Application Passwords» ← یک نام (مثلاً Suvreno) بنویس ← «Add New Application Password» ← رمز نمایش‌داده‌شده را همین‌جا بچسبان. رمز اصلی حسابت را هرگز اینجا نگذار. اگر این بخش را نمی‌بینی، سایتت باید HTTPS داشته باشد و افزونه‌ی امنیتی‌ات نباید REST API را ببندد.", "WordPress → Users → Profile → Application Passwords → name it → Add New → paste the password here. Never use your main password. Requires HTTPS and an unblocked REST API.");
+      } else if (ty === "ghost") {
+        fields = lb("آدرس سایت Ghost", "Ghost site URL") + inp("jbSiteUrl", "https://blog.example.com", same ? s0.base_url : "") + lb("کلید Admin API", "Admin API key") + inp("jbSitePass", "id:secret", "", true);
+        help = t("در Ghost: Settings ← Integrations ← Add custom integration ← یک نام (مثلاً Suvreno) ← مقدار «Admin API Key» را کپی و اینجا بچسبان (شبیه id:secret). آدرس سایت همان آدرس عمومی سایت Ghost است.", "In Ghost: Settings → Integrations → Add custom integration → copy the Admin API Key (id:secret) here.");
+      } else if (ty === "webhook") {
+        fields = lb("آدرس وبهوک (https)", "Webhook URL (https)") + inp("jbSiteUrl", "https://example.com/hook", "") + lb("توکن (اختیاری)", "Token (optional)") + inp("jbSitePass", "", "", true);
+        help = t("Suvreno هر مقاله را با POST و JSON به این آدرس می‌فرستد: event=suvreno.article و id و title و status (publish/draft) و markdown و html. اگر توکن بدهی در هدرهای Authorization: Bearer و X-Suvreno-Token می‌رود. موقع اتصال یک پیام آزمایشی (event=suvreno.ping) فرستاده می‌شود؛ گیرنده می‌تواند نادیده‌اش بگیرد. با Zapier، Make، n8n یا یک آدرس ساده‌ی خودت روی هر سایتی کار می‌کند. آدرس و توکن رمزنگاری می‌شوند.", "Suvreno POSTs each article as JSON (event=suvreno.article, id, title, status, markdown, html). A token, if given, is sent as Authorization: Bearer and X-Suvreno-Token. A test ping (event=suvreno.ping) is sent when connecting. Works with Zapier, Make, n8n or your own endpoint. URL and token are stored encrypted.");
+      } else if (ty === "telegram") {
+        fields = lb("کانال (مثل @mychannel)", "Channel (like @mychannel)") + inp("jbSiteUser", "@mychannel", same ? s0.username : "") + lb("توکن بات تلگرام", "Telegram bot token") + inp("jbSitePass", "123456789:ABC...", "", true);
+        help = t("۱) در تلگرام با @BotFather یک بات بساز و توکنش را کپی کن. ۲) بات را به کانالت اضافه کن و ادمین کن (با اجازه‌ی ارسال پیام). ۳) نام کانال را مثل @mychannel بنویس. تلگرام پیش‌نویس ندارد؛ مقاله مستقیم در کانال ارسال می‌شود و اگر طولانی باشد در چند پیام می‌آید.", "1) Create a bot with @BotFather and copy its token. 2) Add the bot to your channel as admin with permission to post. 3) Enter the channel like @mychannel. Telegram has no drafts; articles are posted directly (split into several messages if long).");
+      } else {
+        help = t("بدون اتصال، نتیجه فقط در تب «نتیجه‌ها» (و اعلان/ایمیل) می‌آید و خودت متن را کپی و منتشر می‌کنی. اگر الان به جایی وصلی و می‌خواهی قطع شود، دکمه‌ی «قطع اتصال» را بزن.", "Without a connection the result stays in the Results tab (and notification/email) and you copy and publish it yourself. Use Disconnect to remove an existing connection.");
+      }
+      const btns = `<div class="ag-actions">${ty !== "none" ? `<button type="button" class="jb-b" data-jb="ssave">${t(same ? "به‌روزرسانی اتصال" : "اتصال", same ? "Update" : "Connect")}</button>` : ""}${s0 ? `<button type="button" class="jb-b sec" data-jb="sclear">${t("قطع اتصال", "Disconnect")}</button>` : ""}</div>`;
+      const sub = s0 ? (s0.type === "telegram" ? s0.username : s0.type === "ghost" || s0.type === "webhook" ? s0.base_url : s0.base_url + " · " + s0.username) : "";
+      b.innerHTML = `<div class="ag-mut">${t("مقصدی که مقاله‌ها در آن منتشر می‌شود را انتخاب کن. رمز، کلید و توکن رمزنگاری می‌شوند، فقط برای انتشار مطلب‌هایی که خودت سفارش دادی استفاده می‌شوند و هر وقت خواستی قطعشان می‌کنی. اگر انتشار انجام نشود، متن در تب «نتیجه‌ها» می‌ماند و خبر می‌گیری.", "Choose where articles are published. Secrets are stored encrypted, used only for content you ordered, and you can disconnect any time. If publishing fails, the text stays in Results and you are notified.")}</div>
         ${r.ready ? "" : `<div class="jb-msg bad">${t("اتصال سایت هنوز روی سرور راه‌اندازی نشده؛ به پشتیبانی خبر بده.", "Site connection is not set up on the server yet.")}</div>`}
-        ${s0 ? `<div class="jb-it"><b>${esc(s0.site_name || s0.base_url)}<span class="jb-bd ok">${t("وصل است", "Connected")}</span></b><div class="ag-mut">${esc(s0.base_url)} · ${esc(s0.username)}${s0.can_publish ? "" : "<br>" + t("این کاربر فقط پیش‌نویس می‌سازد؛ برای انتشار مستقیم نقش «نویسنده» یا بالاتر لازم است.", "This user can only create drafts.")}</div></div>` : ""}
-        <details style="margin-top:10px"${s0 ? "" : " open"}><summary class="jb-lb" style="cursor:pointer">${t("چطور رمز برنامه بسازم؟", "How do I create an Application Password?")}</summary><div class="ag-mut">${t("وردپرس ← کاربران ← پروفایل ← پایین صفحه «Application Passwords» ← یک نام (مثلاً Suvreno) بنویس ← «Add New Application Password» ← رمز نمایش‌داده‌شده را همین‌جا بچسبان. اگر این بخش را نمی‌بینی، سایتت باید HTTPS داشته باشد و افزونه‌ی امنیتی‌ات نباید REST API را ببندد.", "WordPress → Users → Profile → Application Passwords → name it → Add New → paste the password here. Requires HTTPS and an unblocked REST API.")}</div></details>
-        ${form}<div id="jbMsg" class="jb-msg"></div>`;
+        ${s0 ? `<div class="jb-it"><b>${esc(s0.site_name || s0.base_url)}<span class="jb-bd ok">${t("وصل است", "Connected")}</span></b><div class="ag-mut">${t(TY[s0.type] ? TY[s0.type][0] : s0.type, TY[s0.type] ? TY[s0.type][1] : s0.type)} · ${esc(sub)}${s0.type === "wordpress" && !s0.can_publish ? "<br>" + t("این کاربر فقط پیش‌نویس می‌سازد؛ برای انتشار مستقیم نقش «نویسنده» یا بالاتر لازم است.", "This user can only create drafts.") : ""}</div></div>` : ""}
+        ${lb("نوع مقصد", "Destination type")}<select class="jb-f" id="jbSiteType">${Object.keys(TY).map((k) => `<option value="${k}"${k === ty ? " selected" : ""}>${t(TY[k][0], TY[k][1])}</option>`).join("")}</select>
+        <details style="margin-top:10px" open><summary class="jb-lb" style="cursor:pointer">${t("راهنمای اتصال", "Setup help")}</summary><div class="ag-mut">${help}</div></details>
+        ${fields}${btns}<div id="jbMsg" class="jb-msg"></div>`;
+      const sel = document.getElementById("jbSiteType");
+      if (sel) sel.addEventListener("change", () => { jbState.siteType = sel.value; jbRenderSite(jbState.siteR); });
     }
     function jbRenderMe(pr) {
       const f = (k, fa, en, ph, big) => `<label class="jb-lb">${t(fa, en)}</label>${big ? `<textarea class="jb-f" data-pf="${k}" maxlength="1200" placeholder="${esc(ph)}">${esc(pr[k] || "")}</textarea>` : `<input class="jb-f" data-pf="${k}" maxlength="300" placeholder="${esc(ph)}" value="${esc(pr[k] || "")}">`}`;
@@ -834,11 +881,11 @@
           const r = await plusCall({ mode: "plus-job-parse", text }, 25000); el.disabled = false;
           if (!r || !r.ok) { jbMsg((r && r.message) || t("متوجه نشدم؛ فرم را دستی پر کن.", "Could not parse; fill the form manually."), "bad"); return; }
           jbState.prop = r.proposal; jbRenderJobs();
-          jbMsg(r.proposal.needsDevice ? t("این کار به‌نظر نیاز به ورود به پنل/حساب دارد و فعلاً ثبت نمی‌شود.", "Needs sign-in; not supported yet.") : (r.whenText ? t("زمان فهمیده‌شده (تهران): ", "Understood time (Tehran): ") + r.whenText + t(" — بررسی کن و «ثبت کار» را بزن.", " — check and press Schedule.") : t("زمان را خودت وارد کن.", "Please enter the time.")), r.proposal.needsDevice ? "bad" : "ok");
+          jbMsg(r.proposal.needsDevice ? t("این کار به‌نظر نیاز به ورود به پنل دارد: اگر پنلت API دارد انتخابش کن؛ وگرنه روی دستگاهت اجرا می‌شود.", "Needs a panel login: choose a panel API if you have one; otherwise it runs on your device.") : (r.whenText ? t("زمان فهمیده‌شده (تهران): ", "Understood time (Tehran): ") + r.whenText + t(" — بررسی کن و «ثبت کار» را بزن.", " — check and press Schedule.") : t("زمان را خودت وارد کن.", "Please enter the time.")), "ok");
         } else if (a === "create") {
           const p = jbState.prop || {}, urls = String((document.getElementById("jbUrls") || {}).value || "").split(/\s+/).map((s) => s.trim()).filter(Boolean), pubMode = (document.getElementById("jbPub") || {}).value || "";
           el.disabled = true;
-          const r = await plusCall({ mode: "plus-job-create", task: (document.getElementById("jbTask") || {}).value, date: (document.getElementById("jbDate") || {}).value, time: (document.getElementById("jbTime") || {}).value, repeat: (document.getElementById("jbRep") || {}).value, urls, kind: p.needsDevice ? "needs_login" : p.kind, title: p.title, publish: pubMode !== "", publishMode: pubMode, notifyEmail: !!((document.getElementById("jbMail") || {}).checked) }, 20000); el.disabled = false;
+          const r = await plusCall({ mode: "plus-job-create", task: (document.getElementById("jbTask") || {}).value, date: (document.getElementById("jbDate") || {}).value, time: (document.getElementById("jbTime") || {}).value, repeat: (document.getElementById("jbRep") || {}).value, urls, apiId: (document.getElementById("jbApi") || {}).value || "", apiPaths: String((document.getElementById("jbApiPaths") || {}).value || "").split(/\r?\n/).map((s) => s.trim()).filter(Boolean), kind: (document.getElementById("jbApi") || {}).value ? "api_check" : (p.needsDevice ? "needs_login" : p.kind), title: p.title, publish: pubMode !== "", publishMode: pubMode, notifyEmail: !!((document.getElementById("jbMail") || {}).checked) }, 20000); el.disabled = false;
           if (!r || !r.ok) { jbMsg((r && r.message) || t("ثبت نشد.", "Not saved."), "bad"); return; }
           jbState.prop = null; await jbTab("jobs"); jbMsg(t("ثبت شد ✅ اجرا: ", "Scheduled ✅ at ") + r.runAtText + (r.note ? " — " + r.note : ""), "ok");
         } else if (a === "cancel") { const r = await plusCall({ mode: "plus-job-cancel", id }); await jbTab("jobs"); if (!r || !r.ok) jbMsg((r && r.message) || "", "bad"); }
@@ -848,17 +895,36 @@
           el.disabled = true; jbMsg(t("در حال ارسال به سایت…", "Sending to your site…"));
           const r = await plusCall({ mode: "plus-job-publish", id, status: el.getAttribute("data-st") || "publish" }, 30000); el.disabled = false;
           if (!r || !r.ok) { jbMsg((r && r.message) || t("انتشار نشد.", "Not published."), "bad"); return; }
-          const o = await plusCall({ mode: "plus-job-result", id }); if (o && o.ok) { jbState.view = o.result; jbState.list.siteLinked = o.siteLinked; jbRenderRes(); }
+          const o = await plusCall({ mode: "plus-job-result", id }); if (o && o.ok) { jbState.view = o.result; jbState.list.siteLinked = o.siteLinked; jbState.list.siteType = o.siteType; jbRenderRes(); }
           jbMsg((r.state === "published" ? t("منتشر شد ✅ ", "Published ✅ ") : t("پیش‌نویس در سایت ذخیره شد ✅ ", "Draft saved on site ✅ ")) + (r.note || ""), "ok");
         }
         else if (a === "ssave") {
           el.disabled = true; jbMsg(t("در حال بررسی اتصال…", "Checking connection…"));
-          const r = await plusCall({ mode: "plus-site-set", url: (document.getElementById("jbSiteUrl") || {}).value, username: (document.getElementById("jbSiteUser") || {}).value, password: (document.getElementById("jbSitePass") || {}).value }, 30000); el.disabled = false;
+          const r = await plusCall({ mode: "plus-site-set", type: (document.getElementById("jbSiteType") || {}).value || "wordpress", url: (document.getElementById("jbSiteUrl") || {}).value, username: (document.getElementById("jbSiteUser") || {}).value, password: (document.getElementById("jbSitePass") || {}).value }, 30000); el.disabled = false;
           if (!r || !r.ok) { jbMsg((r && r.message) || t("وصل نشد.", "Not connected."), "bad"); return; }
           const pw = document.getElementById("jbSitePass"); if (pw) pw.value = "";
           await jbTab("site"); jbMsg(t("وصل شد ✅ ", "Connected ✅ ") + (r.note || ""), "ok");
         }
-        else if (a === "sclear") { if (!confirm(t("اتصال سایت قطع و رمز ذخیره‌شده پاک شود؟", "Disconnect the site and delete the stored password?"))) return; const r = await plusCall({ mode: "plus-site-clear" }); if (r && r.ok) { await jbTab("site"); jbMsg(t("قطع شد.", "Disconnected."), "ok"); } }
+        else if (a === "sclear") { if (!confirm(t("اتصال قطع و رمز/توکن ذخیره‌شده پاک شود؟", "Disconnect and delete the stored secret?"))) return; const r = await plusCall({ mode: "plus-site-clear" }); if (r && r.ok) { await jbTab("site"); jbMsg(t("قطع شد.", "Disconnected."), "ok"); } }
+        else if (a === "asave") {
+          el.disabled = true; jbMsg(t("در حال اتصال و تست…", "Connecting and testing…"));
+          const g = (i) => (document.getElementById(i) || {}).value || "";
+          const r = await plusCall({ mode: "plus-api-set", id: id || "", name: g("jbApiName"), url: g("jbApiUrl"), authType: g("jbApiAuth"), headerName: g("jbApiHdr"), username: g("jbApiUser"), secret: g("jbApiSecret"), paths: g("jbApiPathsDef").split(/\r?\n/).map((s) => s.trim()).filter(Boolean) }, 40000); el.disabled = false;
+          if (!r || !r.ok) { jbMsg((r && r.message) || t("وصل نشد.", "Not connected."), "bad"); return; }
+          jbState.apiEdit = null; await jbTab("api");
+          jbMsg(t("وصل شد ✅ ", "Connected ✅ ") + (r.note || ""), "ok");
+          const o = document.getElementById("jbApiOut"); if (o && r.previews) o.textContent = t("نمونه‌ای از آنچه Suvreno می‌بیند (پس از پنهان‌کردن اطلاعات شخصی):", "Sample of what Suvreno sees (after masking personal data):") + "\n" + r.previews.map((x) => x.path + " → " + x.preview).join("\n");
+        }
+        else if (a === "atest") {
+          el.disabled = true; jbMsg(t("در حال تست…", "Testing…"));
+          const r = await plusCall({ mode: "plus-api-test", id }, 40000); el.disabled = false;
+          if (!r || !r.ok) { jbMsg((r && r.message) || t("تست نشد.", "Test failed."), "bad"); return; }
+          jbMsg(r.allOk ? t("همه‌ی مسیرها جواب می‌دهند ✅", "All paths respond ✅") : t("بعضی مسیرها مشکل دارند ⚠️", "Some paths have problems ⚠️"), r.allOk ? "ok" : "bad");
+          const o = document.getElementById("jbApiOut"); if (o) o.textContent = (r.results || []).map((x) => (x.ok ? "✅ " : "❌ ") + x.path + (x.ok ? "" : " — " + x.msg)).join("\n");
+        }
+        else if (a === "aedit") { jbState.apiEdit = ((jbState.apiList && jbState.apiList.links) || []).find((x) => x.id === id) || null; jbRenderApi(jbState.apiList || { links: [] }); }
+        else if (a === "anew") { jbState.apiEdit = null; jbRenderApi(jbState.apiList || { links: [] }); }
+        else if (a === "adel") { if (!confirm(t("این اتصال و کلید ذخیره‌شده‌اش پاک شود؟ کارهای فعالی که از آن می‌خوانند لغو می‌شوند.", "Delete this connection and its stored key? Active tasks using it will be cancelled."))) return; const r = await plusCall({ mode: "plus-api-delete", id }); if (r && r.ok) { jbState.apiEdit = null; await jbTab("api"); jbMsg(t("حذف شد.", "Deleted."), "ok"); } else jbMsg((r && r.message) || "", "bad"); }
         else if (a === "devrun") { await jbRunOnDevice(id, el); }
         else if (a === "back") { jbState.view = null; jbRenderRes(); }
         else if (a === "copy") { const v = jbState.view; try { await navigator.clipboard.writeText(v ? v.body : ""); jbMsg(t("کپی شد ✅", "Copied ✅"), "ok"); } catch { jbMsg(t("کپی نشد؛ متن را دستی انتخاب کن.", "Copy failed; select the text manually."), "bad"); } }
