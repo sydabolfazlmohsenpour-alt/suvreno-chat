@@ -495,47 +495,40 @@
       </div>
 
       <div class="settings-section" id="rubikaBotSec">
-        <div class="id-box-label" id="rubikaBotLabel">🤖 بات روبیکا</div>
-        <p class="modal-subtitle" id="rubikaBotHint" style="margin:4px 0 8px">با سوورنو داخل روبیکا هم می‌تونی چت کنی؛ ساخت تصویر، تحلیل فایل و حافظه.</p>
+        <div class="id-box-label" id="rubikaBotLabel">🤖 بات‌های سوورنو</div>
+        <p class="modal-subtitle" id="rubikaBotHint" style="margin:4px 0 8px">با سوورنو داخل روبیکا، تلگرام، بله و سروش پلاس هم می‌تونی چت کنی؛ ساخت تصویر، تحلیل فایل و حافظه.</p>
         <button class="clear-memory" id="rubikaBotBtn" type="button">💬 استفاده از بات سوورنو در روبیکا</button>
+        <div id="botOtherBtns"></div>
+        <div id="botLinkBox" style="display:none;margin-top:10px"></div>
       </div>
       <script>(function(){
         var URL_="https://rubika.ir/Suvreno_bot";
-        var T={fa:["🤖 بات روبیکا","با سوورنو داخل روبیکا هم می‌تونی چت کنی؛ ساخت تصویر، تحلیل فایل و حافظه.","💬 استفاده از بات سوورنو در روبیکا"],
-               en:["🤖 Rubika bot","You can also chat with Suvreno inside Rubika: image generation, file analysis and memory.","💬 Use the Suvreno bot in Rubika"]};
+        var T={fa:["🤖 بات‌های سوورنو","با سوورنو داخل روبیکا، تلگرام، بله و سروش پلاس هم می‌تونی چت کنی؛ ساخت تصویر، تحلیل فایل و حافظه.","💬 استفاده از بات سوورنو در روبیکا"],
+               en:["🤖 Suvreno bots","You can also chat with Suvreno inside Rubika, Telegram, Bale and Soroush Plus: image generation, file analysis and memory.","💬 Use the Suvreno bot in Rubika"]};
         function apply(){try{var t=T[document.documentElement.lang==="en"?"en":"fa"];
           document.getElementById("rubikaBotLabel").textContent=t[0];
           document.getElementById("rubikaBotHint").textContent=t[1];
           document.getElementById("rubikaBotBtn").textContent=t[2];}catch(e){}}
-        /* داخل اپ اندروید: باز کردن مستقیم برنامه‌ی روبیکا (اگه نصب نبود، می‌ره سایت روبیکا)
-           در سایت: باز کردن صفحه‌ی بات در وب روبیکا */
-        var PKG="app.rbmain.a";
-        var INTENT="intent://rubika.ir/Suvreno_bot#Intent;scheme=https;package="+PKG+
-          ";S.browser_fallback_url="+encodeURIComponent(URL_)+";end";
-        function isApp(){
-          var ua=navigator.userAgent||"";
-          return /SuvrenoApp/i.test(ua)||!!window.SuvrenoNative||!!window.Capacitor;
-        }
-        var b=document.getElementById("rubikaBotBtn");
-        if(b)b.addEventListener("click",function(){
+        /* دکمه‌های بات پیام‌رسان‌ها (روبیکا، تلگرام، بله، سروش پلاس) — یک تابع مشترک:
+           • سایت: صفحه‌ی بات در سایتِ پیام‌رسان (تب جدید)
+           • اپ اندروید: اگه پیام‌رسان نصب بود مستقیم داخل خودش، وگرنه صفحه‌ی وبِ همان پیام‌رسان */
+        var PKGS={rubika:"app.rbmain.a",telegram:"org.telegram.messenger,org.telegram.messenger.web",bale:"ir.nasim",splus:"mobi.mmdt.ottplus"};
+        window.suvOpenBot=function(p,url){
           try{
-            if(isApp()&&/Android/i.test(navigator.userAgent||"")){
-              /* WebView اپ لینک intent:// را مستقیم با startActivity باز می‌کند (MainActivity.shouldOverrideUrlLoading) */
-              var hidden=false;
-              function onVis(){if(document.hidden)hidden=true}
-              document.addEventListener("visibilitychange",onVis);
-              location.href=INTENT;
-              /* اگه بعد از ۱.۶ ثانیه صفحه هنوز جلوی چشم بود، یعنی روبیکا نصب نیست یا باز نشد: صفحه‌ی بات در وب روبیکا */
-              setTimeout(function(){
-                document.removeEventListener("visibilitychange",onVis);
-                if(!hidden&&!document.hidden){try{window.open(URL_,"_blank")}catch(e){location.href=URL_}}
-              },1600);
-              return;
-            }
-            var w=window.open(URL_,"_blank","noopener");
-            if(!w)location.href=URL_;
-          }catch(e){try{location.href=URL_}catch(x){}}
-        });
+            var N=window.SuvrenoNative;
+            if(N&&typeof N.openMessenger==="function"&&PKGS[p]){N.openMessenger(PKGS[p],url);return}
+          }catch(e){}
+          try{
+            var ua=navigator.userAgent||"";
+            var inApp=/SuvrenoApp/i.test(ua)||!!window.SuvrenoNative;
+            if(inApp){location.href=url;return} /* APK قدیمی: لینک رو بیرون از اپ باز می‌کنه (صفحه‌ی وب) */
+            var a=document.createElement("a");a.href=url;a.target="_blank";a.rel="noopener noreferrer";
+            a.style.display="none";document.body.appendChild(a);a.click();
+            setTimeout(function(){try{a.remove()}catch(e){}},500);
+          }catch(e){try{location.href=url}catch(x){}}
+        };
+        var b=document.getElementById("rubikaBotBtn");
+        if(b)b.addEventListener("click",function(){window.suvOpenBot("rubika",URL_)});
         try{new MutationObserver(apply).observe(document.documentElement,{attributes:true,attributeFilter:["lang"]})}catch(e){}
         apply();
       })();</script>
@@ -667,7 +660,7 @@
 
 <script src="logo-data.js?v=5"></script>
 <script src="script.js?v=42"></script>
-<script src="plus.js?v=22"></script>
+<script src="plus.js?v=25"></script>
 <script src="theme.js?v=3"></script>
 <script src="theme-color.js?v=4"></script>
 <script src="games.js?v=3"></script>

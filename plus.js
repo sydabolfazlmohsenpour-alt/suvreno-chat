@@ -156,7 +156,7 @@
           clearUserState(); // اول فیلدهای کاربر پاک می‌شن، بعد فقط چیزی که سرور گفته میاد (جلوی ماندنِ دیتای کهنه)
           state = { ...state, ...s, tokTag: tokTag() };
           localStorage.setItem("SUV_PLUS_STATE", JSON.stringify(state));
-          renderBox(); watchSidebarUsage(); syncSidebarUsage(); renderPill(); renderOrderBanner(); renderInviteSettings(); try { renderTaste(); } catch {}
+          renderBox(); watchSidebarUsage(); syncSidebarUsage(); renderPill(); renderOrderBanner(); renderInviteSettings(); renderBotLink(false); try { renderTaste(); } catch {}
           if (cardEl && cardEl.isConnected) renderCardSheet();
           if (prevWait && !state.cardOrder && isPlus() && (!wasPlus || Number(state.expiresAt) > prevExp)) toast(t("✨ پرداختت تأیید شد و پلنت فعال شد!", "✨ Your payment was confirmed and your plan is active!"), 6000);
         }
@@ -873,6 +873,21 @@
         ${f("business", "نام کسب‌وکار", "Business name", "")}${f("kind", "نوع کسب‌وکار", "Type of business", t("مثلاً فروشگاه آنلاین چای", "e.g. online tea shop"))}${f("site", "آدرس سایت", "Website", "example.com")}${f("audience", "مخاطب‌ها", "Audience", t("مثلاً خانم‌های ۲۵ تا ۴۵ ساله", ""))}${f("tone", "لحن نوشتن", "Writing tone", t("مثلاً صمیمی و ساده / رسمی", ""))}${f("topics", "موضوع‌های مهم برای تو", "Topics you care about", "")}${f("notes", "یادداشت‌های دیگر", "Other notes", "", true)}
         <div class="ag-actions"><button type="button" class="jb-b" data-jb="psave">${t("ذخیره", "Save")}</button><button type="button" class="jb-b sec" data-jb="pclear">${t("پاک کردن همه", "Delete all")}</button></div><div id="jbMsg" class="jb-msg"></div>`;
     }
+    /* آلارم گوشی از داخل «کارهای زمان‌بندی‌شده»: اپ اندروید همان لحظه آلارم را در ساعت گوشی می‌گذارد و گوشی سر ساعت زنگ می‌زند
+       (آلارم ساعت گوشی فقط تا ۲۴ ساعت آینده قابل تنظیم است). این نوع درخواست «کار ابری» ساخته نمی‌کند. */
+    async function jbPhoneAlarm(pr) {
+      const m = /^(\d{1,2}):(\d{2})$/.exec(String(pr.time || ""));
+      if (!m) { jbMsg(t("ساعت آلارم را متوجه نشدم؛ مثلاً بنویس: «فردا ساعت ۷ صبح آلارم بذار».", "I couldn't tell the alarm time; e.g. \"set an alarm for 7 AM tomorrow\"."), "bad"); return; }
+      const hour = Number(m[1]), minute = Number(m[2]);
+      if (!(window.SuvNative && window.SuvNative.on && window.SuvNative.on())) { jbMsg(t("برای گذاشتن آلارم روی گوشی باید داخل اپ اندروید سوورنو باشی (در سایت مرورگر دسترسی به ساعت گوشی ندارم).", "To set a phone alarm you need to be inside the Suvreno Android app."), "bad"); return; }
+      if (pr.date) {
+        const at = Date.parse(pr.date + "T" + String(pr.time).padStart(5, "0") + ":00+03:30");
+        if (isFinite(at) && at - Date.now() > 24 * 36e5) { jbMsg(t("آلارم ساعت گوشی فقط برای ۲۴ ساعت آینده تنظیم می‌شه؛ نزدیک‌تر به اون روز دوباره بگو.", "Phone alarms can only be set for the next 24 hours; ask again closer to the day."), "bad"); return; }
+      }
+      jbMsg(t("در حال تنظیم آلارم…", "Setting the alarm…"));
+      const r = await window.SuvNative.run({ type: "alarm", hour, minute, label: String(pr.title || "Suvreno").slice(0, 60) });
+      jbMsg((r && r.message) || t("آلارم تنظیم نشد.", "The alarm was not set."), r && r.ok ? "ok" : "bad");
+    }
     async function jbAction(el) {
       const a = el.getAttribute("data-jb"), id = el.getAttribute("data-id");
       try {
@@ -880,6 +895,7 @@
           const text = (document.getElementById("jbText") || {}).value || ""; el.disabled = true; jbMsg(t("در حال فهمیدن…", "Working…"));
           const r = await plusCall({ mode: "plus-job-parse", text }, 25000); el.disabled = false;
           if (!r || !r.ok) { jbMsg((r && r.message) || t("متوجه نشدم؛ فرم را دستی پر کن.", "Could not parse; fill the form manually."), "bad"); return; }
+          if (r.proposal && r.proposal.kind === "phone_alarm") { await jbPhoneAlarm(r.proposal); return; }
           jbState.prop = r.proposal; jbRenderJobs();
           jbMsg(r.proposal.needsDevice ? t("این کار به‌نظر نیاز به ورود به پنل دارد: اگر پنلت API دارد انتخابش کن؛ وگرنه روی دستگاهت اجرا می‌شود.", "Needs a panel login: choose a panel API if you have one; otherwise it runs on your device.") : (r.whenText ? t("زمان فهمیده‌شده (تهران): ", "Understood time (Tehran): ") + r.whenText + t(" — بررسی کن و «ثبت کار» را بزن.", " — check and press Schedule.") : t("زمان را خودت وارد کن.", "Please enter the time.")), "ok");
         } else if (a === "create") {
@@ -1730,6 +1746,111 @@ function packCard(K) {
     };
 
     /* ---------- شروع ---------- */
+    /* ---------- اتصال حساب به بات‌ها: روبیکا، تلگرام، بله، سروش پلاس (داخل تنظیمات ← بات‌های سوورنو) ----------
+       مسیر ۱: «اتصال حساب» کد ۱۰ دقیقه‌ای می‌دهد ← کاربر در بات می‌فرستد: /link کد
+       مسیر ۲: کاربر در بات /link را می‌زند و کدی که بات داده را همین‌جا وارد می‌کند. */
+    let botLinkInfo = null, botLinkCode = null, botLinkTimer = 0;
+    function botLinkStop() { if (botLinkTimer) { clearInterval(botLinkTimer); botLinkTimer = 0; } }
+    async function renderBotLink(force) {
+      try {
+        const box = document.getElementById("botLinkBox");
+        if (!box) return;
+        if (!state.signedIn) { box.style.display = "none"; botLinkStop(); return; }
+        box.style.display = "";
+        if (force || !botLinkInfo) {
+          try { const r = await plusCall({ mode: "bot-link-status" }, 12000); if (r && r.ok) botLinkInfo = r; } catch {}
+        }
+        drawBotLink(box);
+      } catch (e) { console.error("bot-link", e); }
+    }
+    const PLAT_NAMES = { rubika: ["روبیکا", "Rubika"], telegram: ["تلگرام", "Telegram"], bale: ["بله", "Bale"], splus: ["سروش پلاس", "Soroush Plus"] };
+    const platName = (p) => { const x = PLAT_NAMES[p] || PLAT_NAMES.rubika; return t(x[0], x[1]); };
+    const botUrlsOfInfo = (info) => { const o = Object.assign({}, (info && info.bots) || {}); if (!o.rubika) o.rubika = (info && info.botUrl) || "https://rubika.ir/Suvreno_bot"; return o; };
+    let botLinkBefore = 0;
+    /* دکمه‌های «استفاده از بات سوورنو در …» برای تلگرام، بله و سروش پلاس (روبیکا دکمه‌ی خودش را در index.html دارد).
+       لینک‌ها از Worker می‌آید (bot-info)؛ باتی که لینکش تنظیم نشده نمایش داده نمی‌شود. */
+    async function renderBotButtons() {
+      try {
+        const host = document.getElementById("botOtherBtns");
+        if (!host) return;
+        let bots = null;
+        try { const r = await plusCall({ mode: "bot-info" }, 10000); if (r && r.ok) bots = r.bots; } catch {}
+        host.textContent = "";
+        for (const p of ["telegram", "bale", "splus"]) {
+          const url = bots && bots[p];
+          if (!url) continue;
+          const x = PLAT_NAMES[p];
+          const b = document.createElement("button");
+          b.type = "button"; b.className = "clear-memory";
+          b.textContent = t("💬 استفاده از بات سوورنو در " + x[0], "💬 Use the Suvreno bot in " + x[1]);
+          b.onclick = () => { try { if (window.suvOpenBot) window.suvOpenBot(p, url); else { const w = window.open(url, "_blank"); if (!w) location.href = url; } } catch { try { location.href = url; } catch {} } };
+          host.appendChild(b);
+        }
+      } catch (e) { console.error("bot-buttons", e); }
+    }
+    function drawBotLink(box) {
+      const mk = (tag, text, css) => { const n = document.createElement(tag); if (text != null) n.textContent = text; if (css) n.style.cssText = css; return n; };
+      const btn = (text, fn, cls) => { const b = mk("button", text); b.type = "button"; b.className = cls || "clear-memory"; b.onclick = fn; return b; };
+      box.textContent = "";
+      const info = botLinkInfo;
+      if (!info) { box.appendChild(mk("p", t("الان نتونستم وضعیت اتصال رو بگیرم؛ چند لحظه بعد دوباره تنظیمات رو باز کن.", "Couldn't load the link status; reopen settings in a moment."), "font-size:12px;opacity:.8;margin:4px 0")); return; }
+      if (info.enabled === false) return;
+      const links = Array.isArray(info.links) ? info.links : [];
+      const urls = botUrlsOfInfo(info);
+      if (info.linked) {
+        const names = [...new Set(links.map((l) => platName(l.p || "rubika")))].join(t("، ", ", "));
+        box.appendChild(mk("p", t("✅ حسابت به بات وصله" + (names ? " (" + names + ")" : "") + "؛ حافظه، اشتراک و سقف استفاده با بات مشترکه.", "✅ Your account is linked to the bot" + (names ? " (" + names + ")" : "") + "; memory, plan and limits are shared."), "font-size:13px;margin:6px 0"));
+        box.appendChild(btn(t("🔌 قطع اتصال از همه‌ی بات‌ها", "🔌 Disconnect from all bots"), async () => {
+          if (!confirm(t("اتصال حساب به همه‌ی بات‌ها قطع بشه؟", "Disconnect your account from all bots?"))) return;
+          try { const r = await plusCall({ mode: "bot-unlink" }, 15000); if (r && r.ok) { botLinkInfo = Object.assign({}, botLinkInfo, { linked: false, links: [] }); botLinkCode = null; toast(t("اتصال قطع شد", "Disconnected")); drawBotLink(box); } else toast((r && r.message) || t("نشد؛ دوباره امتحان کن", "Failed; try again")); } catch { toast(t("نشد؛ دوباره امتحان کن", "Failed; try again")); }
+        }));
+      } else {
+        box.appendChild(mk("p", t("برای اینکه حافظه و اشتراکت داخل بات هم کار کنه، حساب سوورنوت رو به بات وصل کن.", "Link your Suvreno account to the bot to share memory and your plan."), "font-size:12px;opacity:.85;margin:6px 0"));
+      }
+      if (botLinkCode && botLinkCode.expiresAt > Date.now()) {
+        const c = botLinkCode;
+        box.appendChild(mk("div", c.code, "direction:ltr;font-family:monospace;font-size:26px;font-weight:800;letter-spacing:4px;text-align:center;padding:10px 0"));
+        box.appendChild(mk("p", t("تو بات سوورنو (روبیکا، تلگرام، بله یا سروش پلاس) این رو بفرست (۱۰ دقیقه اعتبار داره، فقط یک‌بار کار می‌کنه):", "Send this to the Suvreno bot (Rubika, Telegram, Bale or Soroush Plus) (valid 10 minutes, one use):"), "font-size:12px;margin:2px 0"));
+        box.appendChild(mk("div", c.command, "direction:ltr;font-family:monospace;text-align:center;font-size:15px;padding:4px 0 8px"));
+        box.appendChild(btn(t("📋 کپی دستور", "📋 Copy command"), async () => { try { await navigator.clipboard.writeText(c.command); toast(t("کپی شد ✅", "Copied ✅")); } catch { toast(c.command, 8000); } }));
+        const cu = botUrlsOfInfo(c.bots ? c : info);
+        for (const p of ["rubika", "telegram", "bale", "splus"]) {
+          if (!cu[p]) continue;
+          box.appendChild(btn(t("💬 باز کردن بات " + platName(p), "💬 Open the bot in " + platName(p)), () => { try { if (window.suvOpenBot) window.suvOpenBot(p, cu[p]); else window.open(cu[p], "_blank"); } catch {} }));
+        }
+        if (!botLinkTimer) {
+          botLinkTimer = setInterval(async () => {
+            try {
+              if (!document.getElementById("botLinkBox") || !botLinkCode || botLinkCode.expiresAt < Date.now()) { botLinkStop(); botLinkCode = null; renderBotLink(false); return; }
+              const r = await plusCall({ mode: "bot-link-status" }, 10000);
+              const done = r && r.ok && (Array.isArray(r.links) ? r.links.length > botLinkBefore : r.linked);
+              if (done) { botLinkInfo = r; botLinkCode = null; botLinkStop(); toast(t("✅ وصل شد!", "✅ Linked!")); drawBotLink(document.getElementById("botLinkBox")); }
+            } catch {}
+          }, 4000);
+        }
+      } else {
+        botLinkCode = null;
+        box.appendChild(btn(info.linked ? t("🔗 اتصال بات دیگر", "🔗 Link another bot") : t("🔗 اتصال حساب به بات", "🔗 Link account to the bot"), async () => {
+          try {
+            botLinkBefore = links.length;
+            const r = await plusCall({ mode: "bot-link-create" }, 15000);
+            if (r && r.ok && r.code) { botLinkCode = r; drawBotLink(box); } else toast((r && r.message) || t("نشد؛ دوباره امتحان کن", "Failed; try again"));
+          } catch { toast(t("نشد؛ دوباره امتحان کن", "Failed; try again")); }
+        }));
+      }
+      const row = mk("div", null, "display:flex;gap:6px;margin-top:8px;align-items:center");
+      const inp = mk("input"); inp.type = "text"; inp.placeholder = t("کد گرفته‌شده از بات (/link)", "Code from the bot (/link)"); inp.dir = "ltr"; inp.maxLength = 24; inp.style.cssText = "flex:1;min-width:0;padding:8px;border-radius:8px";
+      const go = btn(t("تأیید", "Confirm"), async () => {
+        const code = inp.value.trim();
+        if (!code) return;
+        try {
+          const r = await plusCall({ mode: "bot-link-claim", code }, 20000);
+          if (r && r.ok) { botLinkInfo = Object.assign({}, botLinkInfo, { linked: true }); botLinkCode = null; toast(t("✅ وصل شد!", "✅ Linked!")); renderBotLink(true); } else toast((r && r.message) || t("نشد؛ دوباره امتحان کن", "Failed; try again"), 6000);
+        } catch { toast(t("نشد؛ دوباره امتحان کن", "Failed; try again")); }
+      }); go.style.flex = "0 0 auto";
+      row.appendChild(inp); row.appendChild(go);
+      box.appendChild(row);
+    }
     /* ---------- کد معرف (داخل تنظیمات) ----------
        فقط خودِ «کد» کپی می‌شه، نه لینک؛ دوستت کد رو موقع ثبت‌نام توی مودال «کد معرف» وارد می‌کنه. */
     function renderInviteSettings() {
@@ -1771,7 +1892,7 @@ function packCard(K) {
     }
     function boot() {
       try { localStorage.removeItem("SUV_REF"); } catch {} // لینک دعوت حذف شد؛ فقط «کد معرف» داریم
-      renderBox(); renderPill(); renderInviteSettings();
+      renderBox(); renderPill(); renderInviteSettings(); renderBotLink(false); renderBotButtons();
       try { // لینک «خرید» از pricing.html → index.html?upgrade=1 : صفحه‌ی پلن‌ها رو باز کن
         if (new URLSearchParams(location.search).get("upgrade")) { history.replaceState(null, "", location.pathname); setTimeout(openPage, 700); }
       } catch {}

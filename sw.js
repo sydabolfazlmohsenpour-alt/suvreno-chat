@@ -10,7 +10,7 @@
    (API) رو دست نمی‌زنه، فقط فایل‌های ثابت اپ.
 ========================================= */
 
-const CACHE_NAME = "suvreno-shell-v31";
+const CACHE_NAME = "suvreno-shell-v32";
 const SHELL_FILES = ["./index.html", "./style.css", "./script.js", "./plus.js", "./theme.css", "./theme.js", "./theme-color.js", "./games.js", "./council.js", "./tickets.js", "./logo-data.js", "./net.js", "./vn-orb.js", "./app-promo.js", "./logo.svg", "./manifest.json", "./Vazirmatn.woff2"];
 
 self.addEventListener("install", event => {
