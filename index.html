@@ -24,7 +24,7 @@
   }catch(e){}});})();
   </script>
 
-  <link rel="stylesheet" href="style.css?v=27">
+  <link rel="stylesheet" href="style.css?v=29">
   <link rel="stylesheet" href="theme.css?v=6">
   <link rel="manifest" href="manifest.json">
   <link rel="icon" id="favIcon" href="logo.svg" type="image/svg+xml">
@@ -296,6 +296,24 @@
     </div>
   </div>
 
+  <div class="modal" id="tutorModal">
+    <div class="modal-card">
+      <button class="modal-close" id="closeTutorModal" type="button">×</button>
+      <div class="modal-icon">📚</div>
+      <h2>معلم خصوصی</h2>
+      <p class="modal-subtitle">پایه و درس را انتخاب کن؛ قدم‌به‌قدم و با تمرین یادت می‌دهم.</p>
+      <div class="tutor-label">پایه</div>
+      <div class="tutor-chips" id="tutorGrades"></div>
+      <div class="tutor-label">درس</div>
+      <div class="tutor-chips" id="tutorSubjects"></div>
+      <div class="tutor-label">شماره‌ی درس یا موضوع (اختیاری)</div>
+      <input class="tutor-input" id="tutorLesson" type="text" maxlength="120" placeholder="مثلاً: درس ۶ یا فصل ۲" autocomplete="off">
+      <div class="tutor-label">چه کمکی می‌خواهی؟</div>
+      <div class="tutor-chips" id="tutorModes"></div>
+      <button class="tutor-start" id="tutorStartBtn" type="button" disabled>شروع 🚀</button>
+    </div>
+  </div>
+
   <div class="modal" id="personalityModal">
     <div class="modal-card">
       <button class="modal-close" id="closePersonalityModal" type="button">×</button>
@@ -307,6 +325,7 @@
         <button class="prompt-card persona-card" type="button" data-persona="mentor"><strong data-i18n="persona.mentorTitle">🧑‍🏫 معلم و مربی</strong><span data-i18n="persona.mentorDesc">دقیق، صبور و آموزشی</span></button>
         <button class="prompt-card persona-card" type="button" data-persona="funny"><strong data-i18n="persona.funnyTitle">😂 شوخ و بامزه</strong><span data-i18n="persona.funnyDesc">پر از شوخی و طنز</span></button>
         <button class="prompt-card persona-card" type="button" data-persona="formal"><strong data-i18n="persona.formalTitle">👔 رسمی و حرفه‌ای</strong><span data-i18n="persona.formalDesc">مودب، دقیق و بدون شوخی</span></button>
+        <button class="prompt-card persona-card" type="button" data-persona="tutor"><strong data-i18n="persona.tutorTitle">📚 معلم خصوصی</strong><span data-i18n="persona.tutorDesc">قدم‌به‌قدم یاد می‌دهد، جواب آماده نمی‌دهد</span></button>
       </div>
     </div>
   </div>
@@ -522,6 +541,12 @@
             var ua=navigator.userAgent||"";
             var inApp=/SuvrenoApp/i.test(ua)||!!window.SuvrenoNative;
             if(inApp){location.href=url;return} /* APK قدیمی: لینک رو بیرون از اپ باز می‌کنه (صفحه‌ی وب) */
+            /* مرورگر اندروید: اگه پیام‌رسان نصب باشه مستقیم داخل خودش (پی‌وی بات) باز می‌شه، وگرنه صفحه‌ی وب همان پیام‌رسان */
+            if(/Android/i.test(ua)&&PKGS[p]){
+              var m=/^https?:\/\/([^\/]+)(\/.*)?$/i.exec(url);
+              if(m){location.href="intent://"+m[1]+(m[2]||"/")+"#Intent;scheme=https;package="+PKGS[p].split(",")[0]+";S.browser_fallback_url="+encodeURIComponent(url)+";end";return}
+            }
+            }
             var a=document.createElement("a");a.href=url;a.target="_blank";a.rel="noopener noreferrer";
             a.style.display="none";document.body.appendChild(a);a.click();
             setTimeout(function(){try{a.remove()}catch(e){}},500);
@@ -659,8 +684,8 @@
 </script>
 
 <script src="logo-data.js?v=5"></script>
-<script src="script.js?v=42"></script>
-<script src="plus.js?v=25"></script>
+<script src="script.js?v=44"></script>
+<script src="plus.js?v=26"></script>
 <script src="theme.js?v=3"></script>
 <script src="theme-color.js?v=4"></script>
 <script src="games.js?v=3"></script>
@@ -688,8 +713,8 @@
     bar.innerHTML =
       "⚠️ فایل script.js لود یا اجرا نشد — دکمه‌ها کار نمی‌کنن.<br>" +
       "۱) این صفحه رو یه‌بار hard-refresh کن (Ctrl+Shift+R یا حالت ناشناس).<br>" +
-      "۲) مطمئن شو فایل‌های index.html و script.js?v=42 و logo-data.js?v=5 و style.css?v=27 همه دقیقاً آپلود شدن.<br>" +
-      "۳) آدرس همین سایت را با ‎/script.js?v=42 در انتها باز کن — باید کد جاوااسکریپت رو ببینی، نه یه صفحه‌ی خالی یا JSON.";
+      "۲) مطمئن شو فایل‌های index.html و script.js?v=44 و logo-data.js?v=5 و style.css?v=29 همه دقیقاً آپلود شدن.<br>" +
+      "۳) آدرس همین سایت را با ‎/script.js?v=44 در انتها باز کن — باید کد جاوااسکریپت رو ببینی، نه یه صفحه‌ی خالی یا JSON.";
     document.body.prepend(bar);
   }, 3500);
 </script>

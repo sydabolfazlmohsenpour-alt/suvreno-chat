@@ -4243,3 +4243,38 @@ html[dir="ltr"] .chat-context-menu{
   html[dir="ltr"] .sidebar.open{ right:auto; left:0; }
   html[dir="ltr"] .chat-context-menu{ left:auto; right:12px; }
 }
+html[dir="ltr"] .sidebar:not(.open){ box-shadow:none; }
+
+
+/* ===== معلم خصوصی: کارت صفحه‌ی اول + صفحه‌ی انتخاب ===== */
+.welcome-logo-wrap.am-has-tutor{ flex-direction:column; gap:26px; }
+.am-tutor-card{
+  pointer-events:auto; display:flex; align-items:center; gap:12px;
+  max-width:min(340px,86vw); padding:12px 16px; border-radius:20px; cursor:pointer;
+  background:var(--btn-bg); border:1px solid var(--btn-border); color:var(--btn-text);
+  text-align:right; transition:.15s; font-family:inherit;
+}
+.am-tutor-card:hover{ background:var(--btn-bg-hover); transform:translateY(-2px); }
+.am-tutor-ic{ font-size:28px; line-height:1; }
+.am-tutor-tx{ display:flex; flex-direction:column; gap:3px; }
+.am-tutor-tx strong{ font-size:calc(15px * var(--fs,1)); }
+.am-tutor-tx em{ font-style:normal; font-size:calc(11.5px * var(--fs,1)); color:var(--muted); line-height:1.6; }
+.tutor-label{ margin:16px 0 8px; font-size:calc(13px * var(--fs,1)); color:var(--muted); text-align:right; }
+.tutor-chips{ display:flex; flex-wrap:wrap; gap:8px; justify-content:flex-start; }
+.tutor-chip{
+  padding:9px 14px; border-radius:999px; cursor:pointer; font-family:inherit;
+  font-size:calc(13.5px * var(--fs,1)); color:var(--btn-text);
+  background:var(--btn-bg); border:1px solid var(--btn-border); transition:.15s;
+}
+.tutor-chip:hover{ background:var(--btn-bg-hover); }
+.tutor-chip.active{ border-color:var(--ac-soft); color:var(--ac-soft); box-shadow:0 0 0 1px var(--ac-soft) inset; }
+.tutor-hint{ font-size:calc(12px * var(--fs,1)); color:var(--muted); }
+.tutor-input{
+  width:100%; box-sizing:border-box; padding:12px 14px; border-radius:14px; font-family:inherit;
+  font-size:calc(14px * var(--fs,1)); color:var(--text); background:var(--btn-bg); border:1px solid var(--btn-border);
+}
+.tutor-start{
+  width:100%; margin-top:20px; padding:14px; border-radius:16px; border:0; cursor:pointer; font-family:inherit;
+  font-size:calc(16px * var(--fs,1)); font-weight:700; background:var(--ac-soft); color:var(--sv-on-accent);
+}
+.tutor-start:disabled{ opacity:.4; cursor:not-allowed; }

@@ -1749,7 +1749,7 @@ function packCard(K) {
     /* ---------- اتصال حساب به بات‌ها: روبیکا، تلگرام، بله، سروش پلاس (داخل تنظیمات ← بات‌های سوورنو) ----------
        مسیر ۱: «اتصال حساب» کد ۱۰ دقیقه‌ای می‌دهد ← کاربر در بات می‌فرستد: /link کد
        مسیر ۲: کاربر در بات /link را می‌زند و کدی که بات داده را همین‌جا وارد می‌کند. */
-    let botLinkInfo = null, botLinkCode = null, botLinkTimer = 0;
+    let botLinkInfo = null, botLinkCode = null, botLinkTimer = 0, botLinkErr = "";
     function botLinkStop() { if (botLinkTimer) { clearInterval(botLinkTimer); botLinkTimer = 0; } }
     async function renderBotLink(force) {
       try {
@@ -1758,7 +1758,7 @@ function packCard(K) {
         if (!state.signedIn) { box.style.display = "none"; botLinkStop(); return; }
         box.style.display = "";
         if (force || !botLinkInfo) {
-          try { const r = await plusCall({ mode: "bot-link-status" }, 12000); if (r && r.ok) botLinkInfo = r; } catch {}
+          try { const r = await plusCall({ mode: "bot-link-status" }, 12000); if (r && r.ok) { botLinkInfo = r; botLinkErr = ""; } else botLinkErr = (r && (r.message || r.code)) || ""; } catch { botLinkErr = ""; }
         }
         drawBotLink(box);
       } catch (e) { console.error("bot-link", e); }
@@ -1775,6 +1775,7 @@ function packCard(K) {
         if (!host) return;
         let bots = null;
         try { const r = await plusCall({ mode: "bot-info" }, 10000); if (r && r.ok) bots = r.bots; } catch {}
+        bots = Object.assign({ telegram: "https://t.me/Suvreno_bot", bale: "https://ble.ir/Suvreno_bot", splus: "https://splus.ir/Suvreno_bot" }, bots || {});
         host.textContent = "";
         for (const p of ["telegram", "bale", "splus"]) {
           const url = bots && bots[p];
@@ -1792,8 +1793,13 @@ function packCard(K) {
       const mk = (tag, text, css) => { const n = document.createElement(tag); if (text != null) n.textContent = text; if (css) n.style.cssText = css; return n; };
       const btn = (text, fn, cls) => { const b = mk("button", text); b.type = "button"; b.className = cls || "clear-memory"; b.onclick = fn; return b; };
       box.textContent = "";
-      const info = botLinkInfo;
-      if (!info) { box.appendChild(mk("p", t("الان نتونستم وضعیت اتصال رو بگیرم؛ چند لحظه بعد دوباره تنظیمات رو باز کن.", "Couldn't load the link status; reopen settings in a moment."), "font-size:12px;opacity:.8;margin:4px 0")); return; }
+      let info = botLinkInfo;
+      if (!info) {
+        /* وضعیت نیامد؛ دکمه‌ها و کادر کد را باز هم نشان می‌دهیم تا کاربر گیر نکند. */
+        box.appendChild(mk("p", t("الان نتونستم وضعیت اتصال رو بگیرم", "Couldn't load the link status") + (botLinkErr ? " (" + botLinkErr + ")" : "") + t("؛ می‌تونی دوباره امتحان کنی یا همین‌جا کد رو وارد کنی.", "; you can retry or enter the code here."), "font-size:12px;opacity:.8;margin:4px 0"));
+        box.appendChild(btn(t("🔄 تلاش دوباره", "🔄 Retry"), () => renderBotLink(true)));
+        info = { ok: true, enabled: true, linked: false, links: [], bots: {} };
+      }
       if (info.enabled === false) return;
       const links = Array.isArray(info.links) ? info.links : [];
       const urls = botUrlsOfInfo(info);
