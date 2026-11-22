@@ -4215,3 +4215,31 @@ button:hover>.suv-i,button:hover>span>.suv-i{filter:drop-shadow(0 0 4px rgba(var
 .am-link-btn{flex:1;border:1px solid var(--border);border-radius:16px;padding:13px 10px;font-weight:700;font-size:calc(14px * var(--fs,1));color:#fff;background:rgba(255,255,255,.08);cursor:pointer}
 .am-link-btn.primary{border-color:transparent;background:linear-gradient(135deg,var(--ac1),var(--ac3))}
 @keyframes amLinkIn{from{opacity:0}to{opacity:1}}
+
+
+/* =========================================
+   LTR (زبان انگلیسی): جهت صفحه عوض می‌شود و دکمه‌ی سایدبار می‌رود سمت چپ و دکمه‌ی سه‌نقطه سمت راست.
+   سایدبار و منوی سه‌نقطه هم باید از همان سمتِ دکمه‌شان باز شوند، نه از سمت ثابتِ حالت فارسی.
+   (در حالت فارسی/RTL هیچ چیز عوض نمی‌شود.)
+========================================= */
+html[dir="ltr"] .sidebar{
+  right:auto;
+  left:-52%;
+  border-left:0;
+  border-right:1px solid var(--border);
+  box-shadow:20px 0 60px rgba(0,0,0,.35);
+  transition:left .25s ease;
+}
+html[dir="ltr"] .sidebar.open{
+  right:auto;
+  left:0;
+}
+html[dir="ltr"] .chat-context-menu{
+  left:auto;
+  right:18px;
+}
+@media(max-width:600px){
+  html[dir="ltr"] .sidebar{ right:auto; left:-80%; }
+  html[dir="ltr"] .sidebar.open{ right:auto; left:0; }
+  html[dir="ltr"] .chat-context-menu{ left:auto; right:12px; }
+}
