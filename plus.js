@@ -527,6 +527,7 @@
       if (o.type === "done" || o.type === "error" || o.type === "stopped") phRunning = false;
       if (o.type === "started") phRunning = true;
       try { renderPhoneAgent(); } catch {}
+      try { renderDesktopAgent(); } catch {}
       try { chatAgentEvent(o); } catch {}
     };
     function renderPhoneAgent() {
@@ -571,12 +572,50 @@
         }
       };
     }
+    /* ---------- ایجنت دسکتاپ (فقط داخل اپ ویندوز Suvreno Desktop) ---------- */
+    let dkDraft = "", dkBusy = false;
+    async function renderDesktopAgent() {
+      const x = document.getElementById("ppAgentDesk"); if (!x) return;
+      const D = dsk(); if (!D) { x.innerHTML = ""; return; }
+      const old = x.querySelector("#dkTask"); if (old) dkDraft = old.value;
+      let s = {}; try { s = (await D.agentState()) || {}; } catch {}
+      const running = !!s.running, icon = { started: "▶️", step: "•", done: "✅", error: "⚠️", stopped: "⏹", ask: "❓" };
+      const log = phLog.slice(-8).map((o) => `<div class="pp-mut" style="margin-top:3px">${icon[o.type] || "•"} ${esc(o.text || "")}</div>`).join("");
+      x.innerHTML = `<div class="pp-sec"><h3>🖥 ${t("ایجنت دسکتاپ (ویندوز)", "Desktop agent (Windows)")}</h3>
+        <div>${t("به ایجنت بگو با فایل‌های یک پوشه چه کار کند (ساختن، خواندن، ویرایش، مرتب‌کردن، حذف) یا سایت و برنامه‌ای را باز کند. هر لحظه می‌توانی متوقفش کنی.", "Tell the agent what to do with the files of a folder (create, read, edit, organize, delete) or to open a site or program. You can stop it any time.")}</div>
+        <div class="pp-mut" style="margin-top:6px">${t("امنیت: فقط داخل پوشه‌ی کاری که خودت انتخاب می‌کنی فایل می‌خواند/می‌نویسد؛ حذف همیشه «انتقال به سطل زباله» است و حذف، جایگزین‌کردن فایل و باز کردن برنامه با پنجره‌ی تأیید سیستم از تو پرسیده می‌شود. داخل صفحه‌ی سایت‌ها کار نمی‌کند (آن با افزونه‌ی Chrome است). سقف مرحله‌ها و تعداد کار در هر پلن جداست.", "Safety: it only touches files inside the work folder you choose; deleting always means moving to the Recycle Bin, and deleting, overwriting and opening programs ask you in a system dialog. It does not operate inside websites (that is the Chrome extension). Step and task limits depend on your plan.")}</div>
+        <div class="pp-mut" style="margin-top:8px">📁 ${s.workspace ? esc(s.workspace) : t("هنوز پوشه‌ی کاری انتخاب نشده", "No work folder chosen yet")}</div>
+        <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap"><button type="button" data-dk="pick" class="gh" ${running ? "disabled" : ""}>📁 ${t("انتخاب/تغییر پوشه‌ی کاری", "Choose / change work folder")}</button>${s.hasToken ? `<button type="button" data-dk="forget" class="gh">${t("قطع اتصال این کامپیوتر", "Disconnect this computer")}</button>` : ""}</div>
+        <textarea id="dkTask" maxlength="600" ${running ? "disabled" : ""} placeholder="${t("کار را بنویس… مثلاً «یک فایل notes.md بساز و خلاصه‌ی این هفته را بنویس»", "Describe the task…")}" style="margin-top:10px;min-height:70px">${esc(dkDraft)}</textarea>
+        <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">${running ? `<button type="button" data-dk="stop" class="gh">${t("توقف", "Stop")}</button>` : `<button type="button" data-dk="start">${t("شروع", "Start")}</button>`}</div>
+        <div>${log}</div></div>`;
+      x.onclick = async (e) => {
+        const b = e.target && e.target.closest ? e.target.closest("button[data-dk]") : null; if (!b || dkBusy) return;
+        const act = b.getAttribute("data-dk");
+        if (act === "stop") { await D.agentStop(); return; }
+        if (act === "forget") { await D.agentForget(); toast(t("اتصال این کامپیوتر قطع شد.", "This computer was disconnected.")); renderDesktopAgent(); return; }
+        if (act === "pick") { const r = await D.pickWorkspace(); if (r && r.message && !r.ok) toast(r.message, 5000); renderDesktopAgent(); return; }
+        if (act === "start") {
+          const task = String((x.querySelector("#dkTask") || {}).value || "").trim();
+          if (task.length < 5) { toast(t("کار را کامل‌تر بنویس.", "Describe the task in more detail.")); return; }
+          if (!findToken()) { toast(t("اول وارد حساب Suvreno شو 🔒", "Sign in to Suvreno first 🔒")); return; }
+          dkBusy = true; b.disabled = true;
+          try {
+            const out = await deskStart(D, task);
+            if (!out || !out.ok) toast((out && out.message) || t("شروع نشد.", "Couldn't start."), 6000);
+            else { phLog = []; dkDraft = ""; }
+          } catch { toast(t("شروع نشد؛ دوباره امتحان کن.", "Couldn't start; try again.")); }
+          dkBusy = false; renderDesktopAgent();
+        }
+      };
+    }
     /* =====================================================================
        ایجنت داخل چت اصلی: Suvreno خودش می‌فهمد پیام «کار ایجنت» است یا «ابزار آماده‌ی گوشی» یا فقط گفتگو.
        اگر مردد بود، پنجره‌ی گزینه‌ها باز می‌شود. اجرای ایجنت همیشه با یک کارت «اجرا» (تأیید خود کاربر) شروع می‌شود.
        ===================================================================== */
-    const agDevice = () => phNative() ? "phone_app" : (/Android|iPhone|iPad|Mobile/i.test(navigator.userAgent || "") ? "phone_web" : "desktop");
-    const AG_LOOKS = /(دیجی\s*[\u200c-]?\s*کالا|digikala|دیوار|divar|اسنپ|snapp|ترب(?=\s|$)|torob|تپسی|باسلام|basalam|بامیلو|ایمالز|دیجی\s*[\u200c-]?\s*استایل|آپارات|یوتیوب|youtube|اینستاگرام|instagram|تلگرام|telegram|لینکدین|گوگل|google|سایت|وب\s*[\u200c-]?\s*سایت|website|\b[a-z0-9-]+\.(?:com|ir|org|net|io)\b|آمازون|amazon|علی\s*اکسپرس|کروم|chrome|مرورگر|سبد\s*خرید|بخر(?=\s|$)|بخرم|خرید\s*کن|سفارش\s*(?:بده|بذار)|ثبت\s*سفارش|ثبت[\u200c ]?نام|فرم|پر\s*کن|جستجو\s*کن|سرچ\s*کن|لایک|فالو|منتشر\s*کن|ایجنت|\bagent\b|add\s+to\s+cart|\bbuy\b|sign\s*up|log\s*in|search\s+for)/i;
+    const dsk = () => (window.SuvrenoDesktop && typeof window.SuvrenoDesktop.agentAvailable === "function" && window.SuvrenoDesktop.agentAvailable()) ? window.SuvrenoDesktop : null;
+    const agDevice = () => phNative() ? "phone_app" : dsk() ? "desktop_app" : (/Android|iPhone|iPad|Mobile/i.test(navigator.userAgent || "") ? "phone_web" : "desktop");
+    const AG_LOOKS = /(دیجی\s*[\u200c-]?\s*کالا|digikala|دیوار|divar|اسنپ|snapp|ترب(?=\s|$)|torob|تپسی|باسلام|basalam|بامیلو|ایمالز|دیجی\s*[\u200c-]?\s*استایل|آپارات|یوتیوب|youtube|اینستاگرام|instagram|تلگرام|telegram|لینکدین|گوگل|google|سایت|وب\s*[\u200c-]?\s*سایت|website|\b[a-z0-9-]+\.(?:com|ir|org|net|io)\b|آمازون|amazon|علی\s*اکسپرس|کروم|chrome|مرورگر|سبد\s*خرید|بخر(?=\s|$)|بخرم|خرید\s*کن|سفارش\s*(?:بده|بذار)|ثبت\s*سفارش|ثبت[\u200c ]?نام|فرم|پر\s*کن|جستجو\s*کن|سرچ\s*کن|لایک|فالو|منتشر\s*کن|ایجنت|\bagent\b|فایل|پوشه|فولدر|\bfolders?\b|\bfiles?\b|add\s+to\s+cart|\bbuy\b|sign\s*up|log\s*in|search\s+for)/i;
     let extSeen = !!document.documentElement.getAttribute("data-suv-agent-ext"), extAck = null;
     window.addEventListener("message", (e) => {
       if (e.source !== window || !e.data || e.data.source !== "suvreno-agent-ext") return;
@@ -615,6 +654,13 @@
       const dev = agDevice(), setNote = (txt) => { note.textContent = txt; };
       btns.forEach((b) => { b.disabled = true; });
       try {
+        if (dev === "desktop_app") {
+          const out = await deskStart(dsk(), task);
+          if (!out || !out.ok) { setNote((out && out.message) || t("شروع نشد.", "Couldn't start.")); btns[1] && (btns[1].disabled = false); return; }
+          chatRun = { note: setNote, task };
+          setNote(t("ایجنت شروع کرد. پیشرفت همین‌جا نشان داده می‌شود؛ حذف، جایگزین‌کردن فایل و باز کردن برنامه با پنجره‌ی تأیید از تو پرسیده می‌شود.", "The agent started. Progress shows here; deleting, overwriting files and opening programs ask you in a system dialog."));
+          return;
+        }
         let code = "";
         if (dev === "phone_app" && phNative().agentHasToken()) code = "";
         else { const r = await plusCall({ mode: "agent-pair-create", device: dev === "phone_app" ? "phone" : "web" }, 20000); if (!r || !r.ok) { setNote((r && r.message) || t("اتصال ایجنت برقرار نشد.", "Couldn't connect the agent.")); return; } code = String(r.code || "").replace(/-/g, ""); }
@@ -630,8 +676,39 @@
         }
       } catch { setNote(t("شروع نشد؛ دوباره امتحان کن.", "Couldn't start; try again.")); }
     }
-    async function offerAgent(task, target) {
+    async function deskStart(D, task) {
+      const stt = await D.agentState();
+      const pair = async () => { const r = await plusCall({ mode: "agent-pair-create", device: "desktop" }, 20000); if (!r || !r.ok) throw new Error((r && r.message) || t("اتصال ایجنت برقرار نشد.", "Couldn't connect the agent.")); return String(r.code || "").replace(/-/g, ""); };
+      try {
+        let code = stt && stt.hasToken ? "" : await pair();
+        let out = await D.agentStart(code, task);
+        if (out && !out.ok && out.needPair && !code) { code = await pair(); out = await D.agentStart(code, task); }
+        return out;
+      } catch (e) { return { ok: false, message: (e && e.message) || t("شروع نشد.", "Couldn't start.") }; }
+    }
+    function offerDesktop(task, target, kind) {
+      const D = dsk(), isFiles = kind === "files";
+      if (!isFiles && target && target.mode === "site" && target.url) {
+        addCard((card) => {
+          card.innerHTML = `<b>🌐 ${t("کار روی سایت‌ها با افزونه‌ی Chrome انجام می‌شود", "Working inside websites uses the Chrome extension")}</b><div class="ag-task">${esc(task)}</div><div class="ag-mut">${t("اپ دسکتاپ می‌تواند فایل‌های یک پوشه‌ی انتخابی را مدیریت کند و سایت یا برنامه باز کند، اما داخل صفحه‌ی سایت‌ها کلیک و تایپ نمی‌کند. برای «" + (target.name || "سایت") + "» همین حالا سایت را در مرورگر باز می‌کنم؛ برای انجام خودکار کار روی سایت، افزونه‌ی Suvreno Agent را در Chrome نصب کن.", "The desktop app manages files in a folder you pick and can open sites or programs, but it can't click or type inside web pages. I can open the site in your browser now; install the Suvreno Agent Chrome extension to automate work inside sites.")}</div><div class="ag-actions"><button type="button" data-a="open">🌐 ${t("باز کردن سایت", "Open the site")}</button><a href="suvreno-agent.zip" download><button type="button" class="gh">⬇ ${t("دانلود افزونه", "Download extension")}</button></a></div><div class="ag-mut" data-a="note"></div>`;
+          const note = card.querySelector("[data-a=note]");
+          card.querySelector("[data-a=open]").addEventListener("click", async () => { const ok = await D.openUrl(target.url); note.textContent = ok ? t("سایت در مرورگر باز شد.", "Opened in your browser.") : t("باز نشد.", "Couldn't open."); });
+        });
+        return;
+      }
+      addCard((card) => {
+        card.innerHTML = `<b>🖥 ${t("ایجنت دسکتاپ آماده است", "Desktop agent ready")}</b><div class="ag-task">${esc(task)}</div><div class="ag-mut" data-a="ws"></div><div class="ag-mut">${t("روی همین کامپیوتر اجرا می‌شود و فقط داخل پوشه‌ی کاری که خودت انتخاب می‌کنی فایل می‌خواند و می‌نویسد. حذف (به سطل زباله)، جایگزین‌کردن فایل و باز کردن برنامه‌ها همیشه با پنجره‌ی تأیید از تو پرسیده می‌شود.", "It runs on this computer and only reads/writes files inside the work folder you choose. Deleting (to the Recycle Bin), overwriting files and opening programs always ask you in a system dialog.")}</div><div class="ag-actions"><button type="button" data-a="go">▶ ${t("اجرا", "Run")}</button><button type="button" class="gh" data-a="pick">📁 ${t("انتخاب پوشه‌ی کاری", "Choose work folder")}</button><button type="button" class="gh" data-a="no">${t("انصراف", "Cancel")}</button></div><div class="ag-mut" data-a="note"></div>`;
+        const go = card.querySelector("[data-a=go]"), no = card.querySelector("[data-a=no]"), pick = card.querySelector("[data-a=pick]"), note = card.querySelector("[data-a=note]"), wsEl = card.querySelector("[data-a=ws]");
+        const showWs = async () => { try { const s = await D.agentState(); wsEl.textContent = s && s.workspace ? "📁 " + t("پوشه‌ی کاری: ", "Work folder: ") + s.workspace : "📁 " + t("هنوز پوشه‌ی کاری انتخاب نشده (هنگام نیاز از تو می‌پرسد).", "No work folder chosen yet (it asks when needed)."); } catch {} };
+        showWs();
+        pick.addEventListener("click", async () => { const r = await D.pickWorkspace(); if (r && r.ok) showWs(); else if (r && r.message) note.textContent = r.message; });
+        go.addEventListener("click", () => { go.disabled = true; no.disabled = true; pick.disabled = true; startChatAgent(task, card, note, [go, no]); });
+        no.addEventListener("click", () => { go.disabled = true; no.disabled = true; pick.disabled = true; note.textContent = t("لغو شد.", "Cancelled."); });
+      });
+    }
+    async function offerAgent(task, target, kind) {
       const dev = agDevice();
+      if (dev === "desktop_app") { offerDesktop(task, target, kind); return; }
       if (dev === "phone_web") { say(t("ایجنت روی گوشی فقط داخل اپ اندروید Suvreno (نسخه‌ی سایت) کار می‌کند. روی کامپیوتر هم با افزونه‌ی Chrome می‌شود: «تنظیمات ← ایجنت».", "The phone agent only works inside the Suvreno Android app (site build). On a computer use the Chrome extension: Settings → Agent.")); return; }
       if (dev === "phone_app") {
         const N = phNative();
@@ -668,13 +745,24 @@
         if (!r || !r.ok) return false;
         let route = r.route;
         if (route === "ambiguous") { route = await chooseRoute(task, r.options || []); if (route === null) return true; }
-        if (route === "agent") { await offerAgent(task, r.target); return true; }
+        if (route === "agent") { await offerAgent(task, r.target, r.kind); return true; }
         if (route === "phone_tool") return "phone";
         return false;
       } catch { return false; }
     }
     window.SuvAgentChat = { route: agentRoute };
+    function deskAsk(o) {
+      addCard((card) => {
+        card.innerHTML = `<b>🤖 ${t("ایجنت یک سؤال دارد", "The agent has a question")}</b><div class="ag-task">${esc(o.text || "")}</div><textarea maxlength="600" style="width:100%;box-sizing:border-box;min-height:64px;margin-top:8px;padding:10px 12px;border-radius:12px;border:1px solid rgba(127,127,127,.4);background:rgba(127,127,127,.12);color:inherit;font:inherit;line-height:1.8" placeholder="${t("جوابت را بنویس…", "Type your answer…")}"></textarea><div class="ag-actions"><button type="button" data-a="send">${t("ارسال جواب", "Send")}</button><button type="button" class="gh" data-a="stop">${t("توقف ایجنت", "Stop agent")}</button></div>`;
+        const ta = card.querySelector("textarea"), send = card.querySelector("[data-a=send]"), stop = card.querySelector("[data-a=stop]");
+        const lock = () => { ta.disabled = true; send.disabled = true; stop.disabled = true; };
+        send.addEventListener("click", async () => { const v = ta.value.trim(); if (!v) return; lock(); const D = dsk(); if (D) await D.agentReply(v); });
+        stop.addEventListener("click", async () => { lock(); const D = dsk(); if (D) await D.agentStop(); });
+        ta.focus();
+      });
+    }
     function chatAgentEvent(o) {
+      if (o.type === "ask" && dsk()) { deskAsk(o); return; }
       if (!chatRun) return;
       if (o.type === "step" && o.text) chatRun.note(o.text);
       if (o.type === "done") { say("🤖 " + t("ایجنت: ", "Agent: ") + (o.text || t("کار تموم شد.", "Done."))); chatRun = null; }
@@ -689,11 +777,11 @@
         sh = document.createElement("div"); sh.id = "agSheet"; sh.className = "ag-ov"; sh.style.display = "none";
         sh.innerHTML = `<div class="ag-box" dir="${isEn() ? "ltr" : "rtl"}"><button type="button" class="ag-x" aria-label="close">×</button><h3>🤖 ${t("ایجنت Suvreno", "Suvreno Agent")}</h3>
           <div class="pp-mut">${t("ایجنت می‌تواند کارهای چندمرحله‌ای را روی سایت‌ها و برنامه‌ها انجام بدهد. لازم نیست به همین بخش بیایی: کافی است توی چت اصلی بگویی، مثلاً «برو توی دیجی‌کالا یک کت و شلوار مشکی مردانه به سبد خرید اضافه کن». Suvreno خودش می‌فهمد این کار ایجنت است یا کاری که با ابزار آماده‌ی گوشی (آلارم، تماس، پیامک…) انجام می‌شود، و اگر مطمئن نباشد از خودت می‌پرسد.", "The agent can do multi-step jobs on websites and apps. You don't need to come here: just say it in the main chat, e.g. “go to Digikala and add a black men's suit to the cart”. Suvreno works out whether it's an agent job or something its built-in phone tools do (alarm, call, SMS…), and asks you if it isn't sure.")}</div>
-          <div id="ppAgent"></div><div id="ppAgentPhone"></div></div>`;
+          <div id="ppAgent"></div><div id="ppAgentPhone"></div><div id="ppAgentDesk"></div></div>`;
         sh.addEventListener("click", (e) => { if (e.target === sh || (e.target.classList && e.target.classList.contains("ag-x"))) sh.style.display = "none"; });
         document.body.appendChild(sh);
       }
-      sh.style.display = "flex"; renderAgent(); renderPhoneAgent();
+      sh.style.display = "flex"; renderAgent(); renderPhoneAgent(); renderDesktopAgent();
     }
     /* ---------- «کارهای زمان‌بندی‌شده» + «شناخت من» (مرحله‌ی ۱) ---------- */
     function jobCss() {
@@ -749,6 +837,7 @@
     }
     async function jbRunOnDevice(id, el) {
       const dev = agDevice(), hasExt = extSeen || !!document.documentElement.getAttribute("data-suv-agent-ext");
+      if (dev === "desktop_app") { jbMsg(t("کارهای زمان‌بندی‌شده‌ی نیازمند ورود روی سایت‌ها با افزونه‌ی Chrome اجرا می‌شوند؛ Chrome را باز کن و از پنل افزونه «اجرا» را بزن.", "Login-required scheduled tasks run through the Chrome extension: open Chrome and press Run in the extension panel."), "bad"); return; }
       if (dev === "phone_web") { jbMsg(t("روی گوشی، اجرا فقط از داخل اپ اندروید Suvreno (ایجنت گوشی) ممکن است.", "On a phone, this only works inside the Suvreno Android app (phone agent)."), "bad"); return; }
       if (dev === "desktop" && !hasExt) { jbMsg(t("افزونه‌ی Suvreno Agent را در Chrome نصب کن و همین صفحه را دوباره باز کن.", "Install the Suvreno Agent extension in Chrome and reload this page."), "bad"); return; }
       el.disabled = true; jbMsg(t("در حال آماده‌سازی…", "Preparing…"));
@@ -1758,11 +1847,49 @@ function packCard(K) {
         if (!state.signedIn) { box.style.display = "none"; botLinkStop(); return; }
         box.style.display = "";
         if (force || !botLinkInfo) {
-          try { const r = await plusCall({ mode: "bot-link-status" }, 12000); if (r && r.ok) { botLinkInfo = r; botLinkErr = ""; } else botLinkErr = (r && (r.message || r.code)) || ""; } catch { botLinkErr = ""; }
+          try { const r = await plusCall({ mode: "bot-link-status" }, 12000); if (r && r.ok) { botLinkInfo = r; botLinkErr = ""; } else botLinkErr = botOld(r) ? botOldMsg() : ((r && (r.message || r.code)) || ""); } catch { botLinkErr = ""; }
         }
         drawBotLink(box);
       } catch (e) { console.error("bot-link", e); }
     }
+    /* ===== پل بات ← اپ: وقتی داخل اپ اندروید باز است، دستورهای گوشی که از بات آمده‌اند را از سرور می‌گیرد و اجرا می‌کند ===== */
+    const amPhoneRelay = (() => {
+      let timer = null, busy = false;
+      const inApp = () => { try { return !!(window.SuvNative && typeof window.SuvNative.on === "function" && window.SuvNative.on()); } catch { return false; } };
+      async function runOne(a) {
+        try {
+          if (a && a.type === "open_url" && a.url) { window.open(a.url, "_blank") || (location.href = a.url); return { ok: true, message: "سایت رو باز کردم 🌐" }; }
+          const x = await window.SuvNative.run(a);
+          return { ok: !!(x && x.ok), message: String((x && x.message) || "").slice(0, 200) };
+        } catch { return { ok: false, message: "اجرای دستور روی گوشی انجام نشد." }; }
+      }
+      async function tick() {
+        if (busy || document.hidden || !state.signedIn || !inApp()) return;
+        busy = true;
+        try {
+          const r = await plusCall({ mode: "phone-cmd-poll" }, 12000);
+          if (!r || !r.ok || !Array.isArray(r.cmds)) return;
+          for (const c of r.cmds) {
+            const results = [];
+            for (const a of (Array.isArray(c.actions) ? c.actions : []).slice(0, 3)) {
+              const x = await runOne(a);
+              results.push(x);
+              if (!x.ok) break;
+            }
+            try { await plusCall({ mode: "phone-cmd-result", id: c.id, results }, 12000); } catch { }
+          }
+        } catch { } finally { busy = false; }
+      }
+      function start() {
+        if (timer) return;
+        timer = setInterval(tick, 15000);
+        setTimeout(tick, 2500);
+        document.addEventListener("visibilitychange", () => { if (!document.hidden) setTimeout(tick, 500); });
+      }
+      start();
+      return { tick };
+    })();
+
     const PLAT_NAMES = { rubika: ["روبیکا", "Rubika"], telegram: ["تلگرام", "Telegram"], bale: ["بله", "Bale"], splus: ["سروش پلاس", "Soroush Plus"] };
     const platName = (p) => { const x = PLAT_NAMES[p] || PLAT_NAMES.rubika; return t(x[0], x[1]); };
     const botUrlsOfInfo = (info) => { const o = Object.assign({}, (info && info.bots) || {}); if (!o.rubika) o.rubika = (info && info.botUrl) || "https://rubika.ir/Suvreno_bot"; return o; };
@@ -1789,6 +1916,9 @@ function packCard(K) {
         }
       } catch (e) { console.error("bot-buttons", e); }
     }
+    /* اگر Worker پلاس هنوز نسخه‌ی قدیمی باشد، مودهای بات را نمی‌شناسد و PLUS_PASSTHROUGH برمی‌گرداند */
+    const botOld = (r) => !r || r.error === "PLUS_PASSTHROUGH" || r.code === "PLUS_PASSTHROUGH";
+    const botOldMsg = () => t("سرور اتصال بات هنوز به‌روز نشده (نسخه‌ی جدید Worker پلاس باید دیپلوی شود). به پشتیبانی خبر بده.", "The bot-link server isn't updated yet (the new Plus Worker must be deployed).");
     function drawBotLink(box) {
       const mk = (tag, text, css) => { const n = document.createElement(tag); if (text != null) n.textContent = text; if (css) n.style.cssText = css; return n; };
       const btn = (text, fn, cls) => { const b = mk("button", text); b.type = "button"; b.className = cls || "clear-memory"; b.onclick = fn; return b; };
@@ -1810,6 +1940,18 @@ function packCard(K) {
           if (!confirm(t("اتصال حساب به همه‌ی بات‌ها قطع بشه؟", "Disconnect your account from all bots?"))) return;
           try { const r = await plusCall({ mode: "bot-unlink" }, 15000); if (r && r.ok) { botLinkInfo = Object.assign({}, botLinkInfo, { linked: false, links: [] }); botLinkCode = null; toast(t("اتصال قطع شد", "Disconnected")); drawBotLink(box); } else toast((r && r.message) || t("نشد؛ دوباره امتحان کن", "Failed; try again")); } catch { toast(t("نشد؛ دوباره امتحان کن", "Failed; try again")); }
         }));
+        box.appendChild(mk("p", t("📲 دستور به گوشی از داخل بات (آلارم، تایمر، چراغ‌قوه، تقویم و…) وقتی اپ اندروید سوورنو روی گوشی باز باشه انجام می‌شه. اگه اپ بسته باشه، دستور تا ۱۲ ساعت نگه داشته می‌شه.", "📲 Phone commands from the bot (alarm, timer, flashlight, calendar…) run while the Suvreno Android app is open. If the app is closed, the command is held for 12 hours."), "font-size:12px;opacity:.85;margin:10px 0 4px"));
+        { const row = mk("label", null, "display:flex;gap:8px;align-items:flex-start;font-size:12.5px;margin:4px 0 8px;cursor:pointer");
+          const cb = document.createElement("input"); cb.type = "checkbox"; cb.disabled = true; cb.style.marginTop = "3px";
+          row.appendChild(cb);
+          row.appendChild(mk("span", t("کارهای حساس (تماس، پیامک، ایمیل، دوربین) از بات بدون تأیید اجرا شوند", "Run sensitive actions (call, SMS, e-mail, camera) from the bot without asking")));
+          box.appendChild(row);
+          plusCall({ mode: "phone-prefs" }, 10000).then((r) => { if (r && r.ok) { cb.checked = !!r.direct; cb.disabled = false; } }).catch(() => { });
+          cb.onchange = async () => {
+            const want = cb.checked; cb.disabled = true;
+            try { const r = await plusCall({ mode: "phone-prefs", direct: want }, 10000); if (r && r.ok) { cb.checked = !!r.direct; toast(t("ذخیره شد ✅", "Saved ✅")); } else { cb.checked = !want; toast(t("نشد؛ دوباره امتحان کن", "Failed; try again")); } } catch { cb.checked = !want; toast(t("نشد؛ دوباره امتحان کن", "Failed; try again")); }
+            cb.disabled = false;
+          }; }
       } else {
         box.appendChild(mk("p", t("برای اینکه حافظه و اشتراکت داخل بات هم کار کنه، حساب سوورنوت رو به بات وصل کن.", "Link your Suvreno account to the bot to share memory and your plan."), "font-size:12px;opacity:.85;margin:6px 0"));
       }
@@ -1840,20 +1982,27 @@ function packCard(K) {
           try {
             botLinkBefore = links.length;
             const r = await plusCall({ mode: "bot-link-create" }, 15000);
-            if (r && r.ok && r.code) { botLinkCode = r; drawBotLink(box); } else toast((r && r.message) || t("نشد؛ دوباره امتحان کن", "Failed; try again"));
+            if (r && r.ok && r.code) { botLinkCode = r; drawBotLink(box); } else toast(botOld(r) ? botOldMsg() : ((r && r.message) || t("نشد؛ دوباره امتحان کن", "Failed; try again")), 7000);
           } catch { toast(t("نشد؛ دوباره امتحان کن", "Failed; try again")); }
         }));
       }
-      const row = mk("div", null, "display:flex;gap:6px;margin-top:8px;align-items:center");
-      const inp = mk("input"); inp.type = "text"; inp.placeholder = t("کد گرفته‌شده از بات (/link)", "Code from the bot (/link)"); inp.dir = "ltr"; inp.maxLength = 24; inp.style.cssText = "flex:1;min-width:0;padding:8px;border-radius:8px";
+      const row = mk("div", null, "display:flex;flex-direction:column;gap:8px;margin-top:12px;width:100%;box-sizing:border-box");
+      row.appendChild(mk("p", t("کد اتصال را از بات گرفته‌ای؟ (در بات /link بزن) همین‌جا وارد کن:", "Got a code from the bot (/link)? Enter it here:"), "font-size:12px;opacity:.85;margin:0"));
+      const inp = mk("input"); inp.type = "text"; inp.placeholder = t("کد گرفته‌شده از بات (/link)", "Code from the bot (/link)"); inp.dir = "ltr"; inp.maxLength = 24;
+      inp.setAttribute("autocomplete", "off"); inp.setAttribute("autocapitalize", "characters"); inp.setAttribute("autocorrect", "off"); inp.spellcheck = false;
+      inp.style.cssText = "display:block;width:100%;box-sizing:border-box;min-height:48px;padding:12px 14px;border-radius:12px;font-size:17px;font-family:monospace;letter-spacing:2px;text-align:center;background:rgba(255,255,255,.07);color:inherit;border:1px solid rgba(255,255,255,.25);outline:none";
       const go = btn(t("تأیید", "Confirm"), async () => {
         const code = inp.value.trim();
-        if (!code) return;
+        if (!code) { toast(t("اول کد را وارد کن", "Enter the code first")); return; }
+        go.disabled = true;
         try {
           const r = await plusCall({ mode: "bot-link-claim", code }, 20000);
-          if (r && r.ok) { botLinkInfo = Object.assign({}, botLinkInfo, { linked: true }); botLinkCode = null; toast(t("✅ وصل شد!", "✅ Linked!")); renderBotLink(true); } else toast((r && r.message) || t("نشد؛ دوباره امتحان کن", "Failed; try again"), 6000);
+          if (r && r.ok) { botLinkInfo = Object.assign({}, botLinkInfo, { linked: true }); botLinkCode = null; toast(t("✅ وصل شد!", "✅ Linked!")); renderBotLink(true); }
+          else toast(botOld(r) ? botOldMsg() : ((r && r.message) || t("نشد؛ دوباره امتحان کن", "Failed; try again")), 7000);
         } catch { toast(t("نشد؛ دوباره امتحان کن", "Failed; try again")); }
-      }); go.style.flex = "0 0 auto";
+        go.disabled = false;
+      }); go.style.cssText = (go.style.cssText || "") + ";display:block;width:100%;box-sizing:border-box;min-height:46px";
+      inp.addEventListener("keydown", (ev) => { if (ev.key === "Enter") go.click(); });
       row.appendChild(inp); row.appendChild(go);
       box.appendChild(row);
     }

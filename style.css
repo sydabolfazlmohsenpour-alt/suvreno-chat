@@ -4246,7 +4246,7 @@ html[dir="ltr"] .chat-context-menu{
 html[dir="ltr"] .sidebar:not(.open){ box-shadow:none; }
 
 
-/* ===== معلم خصوصی: کارت صفحه‌ی اول + صفحه‌ی انتخاب ===== */
+/* ===== معلم خصوصی: کارت صفحه‌ی اول + دکمه‌های پاسخ داخل گفتگو (دور ۶۵) ===== */
 .welcome-logo-wrap.am-has-tutor{ flex-direction:column; gap:26px; }
 .am-tutor-card{
   pointer-events:auto; display:flex; align-items:center; gap:12px;
@@ -4255,10 +4255,18 @@ html[dir="ltr"] .sidebar:not(.open){ box-shadow:none; }
   text-align:right; transition:.15s; font-family:inherit;
 }
 .am-tutor-card:hover{ background:var(--btn-bg-hover); transform:translateY(-2px); }
+.am-tutor-card.am-tutor-in-hero{
+  position:relative; z-index:5; width:100%; max-width:none; box-sizing:border-box; margin:0; padding:14px 16px; border-radius:24px;
+  touch-action:manipulation; -webkit-tap-highlight-color:transparent;
+  background:linear-gradient(135deg,rgba(var(--ac1-rgb,0,207,255),.18),rgba(var(--ac3-rgb,255,75,228),.12));
+  border:1px solid rgba(var(--ac1-rgb,0,207,255),.38);
+}
+.am-tutor-card.am-tutor-in-hero .am-tutor-tx{ flex:1; min-width:0; }
 .am-tutor-ic{ font-size:28px; line-height:1; }
 .am-tutor-tx{ display:flex; flex-direction:column; gap:3px; }
 .am-tutor-tx strong{ font-size:calc(15px * var(--fs,1)); }
 .am-tutor-tx em{ font-style:normal; font-size:calc(11.5px * var(--fs,1)); color:var(--muted); line-height:1.6; }
+.am-tq-chips{ display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; justify-content:flex-start; }
 .tutor-label{ margin:16px 0 8px; font-size:calc(13px * var(--fs,1)); color:var(--muted); text-align:right; }
 .tutor-chips{ display:flex; flex-wrap:wrap; gap:8px; justify-content:flex-start; }
 .tutor-chip{
