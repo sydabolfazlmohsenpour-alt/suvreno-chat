@@ -1,0 +1,37 @@
+name: Publish web files to Suvreno app
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Publish
+        env:
+          WEB_PUBLISH_KEY: ${{ secrets.WEB_PUBLISH_KEY }}
+        run: |
+          python3 - <<'PY'
+          import os, json, base64, urllib.request, sys
+          ok = ('.html', '.js', '.css', '.json', '.png', '.jpg', '.jpeg', '.webp', '.svg', '.woff2', '.ico')
+          skip = {'assetlinks.json'}
+          files = []
+          for n in sorted(os.listdir('.')):
+              if os.path.isfile(n) and n.lower().endswith(ok) and n not in skip:
+                  files.append({'path': n, 'b64': base64.b64encode(open(n, 'rb').read()).decode()})
+          print('files:', len(files))
+          req = urllib.request.Request(
+              'https://api.suvreno.ir/web/publish',
+              data=json.dumps({'files': files}).encode(),
+              headers={'Content-Type': 'application/json',
+                       'Authorization': 'Bearer ' + os.environ['WEB_PUBLISH_KEY'],
+                       'User-Agent': 'suvreno-action'},
+              method='POST')
+          try:
+              print(urllib.request.urlopen(req, timeout=120).read().decode())
+          except urllib.error.HTTPError as e:
+              print(e.code, e.read().decode()); sys.exit(1)
+          PY
