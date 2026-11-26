@@ -1,6 +1,5 @@
 name: Publish web files to Suvreno app
 
-
 on:
   push:
     branches: [main]
