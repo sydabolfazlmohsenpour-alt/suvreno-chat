@@ -308,6 +308,40 @@
     }
 
     /* ---------- جزئیات تیکت و پاسخ پشتیبانی ---------- */
+    /* ---------- فرم نظرسنجی بعد از خرید اشتراک (تیکتِ kind=survey) ---------- */
+    function svHtml(k) {
+      var sv = k.survey || {};
+      if (sv.answered) {
+        var st = ""; for (var i = 1; i <= 5; i++) st += i <= sv.rating ? "★" : "☆";
+        return '<div class="tk-msg me"><div class="tk-who">' + esc(t("نظر تو", "Your feedback")) + '</div><div style="font-size:22px;color:#f5c542;letter-spacing:3px">' + st + '</div>' +
+          (sv.pros ? '<div style="margin-top:8px">👍 ' + esc(sv.pros) + '</div>' : "") + (sv.cons ? '<div style="margin-top:8px">👎 ' + esc(sv.cons) + '</div>' : "") + '</div>' +
+          '<div class="tk-wait">🙏 ' + esc(t("ممنون که نظرت را گفتی؛ مستقیم به من می‌رسد.", "Thanks for your feedback; it reaches me directly.")) + '</div>';
+      }
+      S.svRate = 0;
+      var stars = ""; for (var j = 1; j <= 5; j++) stars += '<button type="button" class="tk-star" data-r="' + j + '" aria-label="' + j + '" style="background:none;border:0;font-size:34px;line-height:1;cursor:pointer;color:var(--muted,#8e9bb0);padding:2px 4px">★</button>';
+      return '<div class="tk-f"><label>' + esc(t("از ۱ تا ۵ چقدر راضی هستی؟", "How satisfied are you, 1 to 5?")) + '</label><div id="tkStars" dir="ltr" style="display:flex;gap:2px;justify-content:center">' + stars + '</div></div>' +
+        '<div class="tk-f"><label for="tkPros">👍 ' + esc(t("نقاط قوت اشتراک چه بود؟", "What did you like?")) + '</label><textarea id="tkPros" maxlength="1500" style="min-height:80px"></textarea></div>' +
+        '<div class="tk-f"><label for="tkCons">👎 ' + esc(t("چه چیزی اذیتت کرد یا کم بود؟", "What was missing or annoying?")) + '</label><textarea id="tkCons" maxlength="1500" style="min-height:80px"></textarea></div>' +
+        '<div class="tk-acts"><button class="tk-go" id="tkSvSend" type="button">' + esc(t("ارسال نظر", "Send feedback")) + '</button></div><div class="tk-err" id="tkSvErr"></div>';
+    }
+    function svBind(k) {
+      var box = $("tkStars"); if (!box) return;
+      box.querySelectorAll(".tk-star").forEach(function (b) {
+        b.addEventListener("click", function () {
+          S.svRate = +b.getAttribute("data-r");
+          box.querySelectorAll(".tk-star").forEach(function (x) { x.style.color = +x.getAttribute("data-r") <= S.svRate ? "#f5c542" : ""; });
+        });
+      });
+      $("tkSvSend").addEventListener("click", async function () {
+        var err = $("tkSvErr"), btn = $("tkSvSend"); err.textContent = "";
+        if (!S.svRate) { err.textContent = t("اول یک امتیاز از ۱ تا ۵ انتخاب کن.", "Please pick a rating from 1 to 5 first."); return; }
+        btn.disabled = true;
+        var res = await api("ticket-survey-answer", { id: k.id, rating: S.svRate, pros: ($("tkPros").value || "").trim(), cons: ($("tkCons").value || "").trim() }, 25000);
+        if (res && res.ok) { S.tickets = null; renderDetail(k.id); return; }
+        btn.disabled = false; err.textContent = (res && res.message) || t("ارسال انجام نشد؛ دوباره امتحان کن.", "Couldn't send; please try again.");
+      });
+    }
+
     async function renderDetail(id) {
       var body = $("tkBody"); body.innerHTML = '<div class="tk-empty">' + esc(t("در حال بارگذاری…", "Loading…")) + '</div>';
       var res = await api("ticket-get", { id: id }, 25000);
@@ -317,16 +351,18 @@
       }
       var k = res.ticket, rp = res.replies || [], stt = STATUS[k.status] ? k.status : "open";
       var h = '<div class="tk-it" style="margin-bottom:12px"><span class="tk-st ' + stt + '">' + esc(t(STATUS[stt][0], STATUS[stt][1])) + '</span><span>' + esc(fmtDate(k.createdAt)) + '</span><span class="tk-id">' + esc(k.id) + '</span></div>' +
-        '<div class="tk-msg me"><div class="tk-who">' + esc(t("تو", "You")) + ' — ' + esc((k.firstName || "") + " " + (k.lastName || "")) + '<small>' + esc(fmtDate(k.createdAt)) + '</small></div>' + esc(k.message) +
+        '<div class="tk-msg ' + (k.kind === "survey" ? "sup" : "me") + '"><div class="tk-who">' + (k.kind === "survey" ? "🛟 " + esc(t("سوورنو", "Suvreno")) : esc(t("تو", "You")) + ' — ' + esc((k.firstName || "") + " " + (k.lastName || ""))) + '<small>' + esc(fmtDate(k.createdAt)) + '</small></div>' + esc(k.message) +
         (k.fileName ? '<div style="margin-top:8px;font-size:12.5px;color:var(--sv-turq,#2de2c8)">📎 ' + esc(k.fileName) + '</div>' : "") + '</div>';
-      if (!rp.length) h += '<div class="tk-wait">⏳ ' + esc(t("هنوز پاسخی نیومده؛ معمولاً ظرف چند ساعت جواب می‌دیم. همین‌جا بهت خبر می‌دیم.", "No reply yet; we usually answer within a few hours.")) + '</div>';
+      if (k.kind !== "survey" && !rp.length) h += '<div class="tk-wait">⏳ ' + esc(t("هنوز پاسخی نیومده؛ معمولاً ظرف چند ساعت جواب می‌دیم. همین‌جا بهت خبر می‌دیم.", "No reply yet; we usually answer within a few hours.")) + '</div>';
       rp.forEach(function (y) {
         h += '<div class="tk-msg sup"><div class="tk-who">🛟 ' + esc(t("پشتیبانی Suvreno", "Suvreno Support")) + '<small>' + esc(fmtDate(y.createdAt)) + '</small></div>' + esc(y.message) + '</div>';
       });
-      if (k.status === "closed") h += '<div class="tk-wait">' + esc(t("این تیکت بسته شده. اگه مشکلت ادامه داشت، یه تیکت جدید بفرست.", "This ticket is closed. If the problem continues, send a new ticket.")) + '</div>';
+      if (k.kind !== "survey" && k.status === "closed") h += '<div class="tk-wait">' + esc(t("این تیکت بسته شده. اگه مشکلت ادامه داشت، یه تیکت جدید بفرست.", "This ticket is closed. If the problem continues, send a new ticket.")) + '</div>';
+      if (k.kind === "survey") h += svHtml(k);
       h += '<div class="tk-acts"><button class="tk-sec" id="tkBackList" type="button">' + esc(t("بازگشت به تیکت‌ها", "Back to tickets")) + '</button><button class="tk-go" id="tkNewFromDetail" type="button">' + esc(t("ارسال تیکت جدید", "New ticket")) + '</button></div>';
       body.innerHTML = h;
       $("tkBackList").addEventListener("click", function () { setTab("list"); });
+      if (k.kind === "survey") svBind(k);
       $("tkNewFromDetail").addEventListener("click", function () { setTab("new"); });
       S.tickets = null; refreshBadge(true);
     }
