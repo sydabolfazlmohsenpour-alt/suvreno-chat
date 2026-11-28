@@ -29,6 +29,13 @@
   <link rel="manifest" href="manifest.json">
   <link rel="icon" id="favIcon" href="logo.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" id="touchIcon" href="logo.svg">
+<style id="ncStyle">
+#newChatHeaderBtn{opacity:0;transform:scale(.8);pointer-events:none;transition:opacity .8s ease,transform .8s cubic-bezier(.2,.8,.2,1),box-shadow .2s}
+#newChatHeaderBtn.nc-on{opacity:1;transform:none;pointer-events:auto;box-shadow:0 0 0 1px rgba(123,92,255,.45),0 4px 16px rgba(123,92,255,.28)}
+#newChatHeaderBtn.nc-on:active{transform:scale(.93)}
+#newChatHeaderBtn .nc-ic{display:block}
+@media (prefers-reduced-motion:reduce){#newChatHeaderBtn{transition:none}}
+</style>
 </head>
 
 <body>
@@ -666,8 +673,8 @@
 </script>
 
 <script src="logo-data.js?v=5"></script>
-<script src="script.js?v=45"></script>
-<script src="plus.js?v=29"></script>
+<script src="script.js?v=47"></script>
+<script src="plus.js?v=30"></script>
 <script src="theme.js?v=3"></script>
 <script src="theme-color.js?v=4"></script>
 <script src="games.js?v=3"></script>
@@ -676,6 +683,7 @@
 <script src="app-promo.js?v=4" defer></script>
 <script src="vn-orb.js?v=4" defer></script>
 <script src="app-update-notice.js?v=1" defer></script>
+<script src="new-chat-btn.js?v=1" defer></script>
 
 <script>
   /* ===========================================================
@@ -696,8 +704,8 @@
     bar.innerHTML =
       "⚠️ فایل script.js لود یا اجرا نشد — دکمه‌ها کار نمی‌کنن.<br>" +
       "۱) این صفحه رو یه‌بار hard-refresh کن (Ctrl+Shift+R یا حالت ناشناس).<br>" +
-      "۲) مطمئن شو فایل‌های index.html و script.js?v=45 و logo-data.js?v=5 و style.css?v=30 همه دقیقاً آپلود شدن.<br>" +
-      "۳) آدرس همین سایت را با ‎/script.js?v=45 در انتها باز کن — باید کد جاوااسکریپت رو ببینی، نه یه صفحه‌ی خالی یا JSON.";
+      "۲) مطمئن شو فایل‌های index.html و script.js?v=47 و logo-data.js?v=5 و style.css?v=30 همه دقیقاً آپلود شدن.<br>" +
+      "۳) آدرس همین سایت را با ‎/script.js?v=47 در انتها باز کن — باید کد جاوااسکریپت رو ببینی، نه یه صفحه‌ی خالی یا JSON.";
     document.body.prepend(bar);
   }, 3500);
 </script>
